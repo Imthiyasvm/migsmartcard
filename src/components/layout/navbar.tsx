@@ -24,7 +24,7 @@ const navLinks = [
   { href: "/#pricing", label: "Pricing" },
   { href: "/#how-it-works", label: "How it Works" },
   { href: "/shop", label: "Shop Cards" },
-  { href: "/p/alex-rivera", label: "Demo Card" },
+  { href: "/#demos", label: "Demo Cards" },
 ];
 
 export function Navbar() {

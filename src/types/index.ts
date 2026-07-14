@@ -32,6 +32,8 @@ export interface ProfileTheme {
   /** Visual template: default | glass | premium */
   templateId?: "default" | "glass" | "premium";
   layout?: "classic" | "glass" | "premium";
+  /** Profile photo mask on digital card */
+  photoShape?: "circle" | "square";
 }
 
 export interface DigitalProfile {

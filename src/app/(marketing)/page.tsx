@@ -120,7 +120,7 @@ export default function HomePage() {
                   asChild
                   className="border-white/30 text-white hover:bg-white/10"
                 >
-                  <Link href="/p/alex-rivera">View Demo</Link>
+                  <Link href="/#demos">View Demos</Link>
                 </Button>
               </div>
               <div className="mt-8 flex items-center gap-6 text-sm text-slate-400">
@@ -203,6 +203,74 @@ export default function HomePage() {
                 </span>
               )
             )}
+          </div>
+        </div>
+      </section>
+
+
+      {/* Demo cards */}
+      <section id="demos" className="border-b border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-950">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <Badge variant="default" className="mb-4">Live demos</Badge>
+            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+              Three premium card styles
+            </h2>
+            <p className="mt-3 text-slate-500">
+              Classic (free), Glassmorphism & Premium Dark (Pro+). Tap a card to open the live profile.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            {[
+              {
+                href: "/p/alex-rivera",
+                name: "Alex Rivera",
+                role: "Classic template",
+                img: "/templates/avatar-default.jpg",
+                cover: "/templates/cover-default.jpg",
+                badge: "Free",
+              },
+              {
+                href: "/p/jordan-lee",
+                name: "Jordan Lee",
+                role: "Glassmorphism",
+                img: "/templates/avatar-glass.jpg",
+                cover: "/templates/cover-glass.jpg",
+                badge: "Pro+",
+              },
+              {
+                href: "/p/sam-chen",
+                name: "Sam Chen",
+                role: "Premium Dark",
+                img: "/templates/avatar-premium.jpg",
+                cover: "/templates/cover-premium.jpg",
+                badge: "Pro+",
+              },
+            ].map((d) => (
+              <Link
+                key={d.href}
+                href={d.href}
+                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft transition hover:-translate-y-1 hover:shadow-card dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div
+                  className="relative h-28 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${d.cover})` }}
+                >
+                  <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    {d.badge}
+                  </span>
+                </div>
+                <div className="-mt-10 flex flex-col items-center px-4 pb-6">
+                  <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white shadow-lg dark:border-slate-900">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={d.img} alt={d.name} className="h-full w-full object-cover object-center" />
+                  </div>
+                  <h3 className="mt-3 font-bold group-hover:text-brand-600">{d.name}</h3>
+                  <p className="text-xs text-slate-500">{d.role}</p>
+                  <span className="mt-3 text-xs font-semibold text-brand-600">Open live card →</span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

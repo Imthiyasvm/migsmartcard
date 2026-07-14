@@ -100,10 +100,23 @@ export default function AdminUsersPage() {
               key={u.id}
               className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between"
             >
-              <div>
+              <div className="min-w-0 flex-1 space-y-2">
                 <p className="font-semibold">{u.name}</p>
                 <p className="text-xs text-slate-500">
-                  {u.email} · Joined {formatDate(u.createdAt)}
+                  Joined {formatDate(u.createdAt)}
+                </p>
+                <Input
+                  type="email"
+                  defaultValue={u.email}
+                  className="h-9 max-w-sm text-xs"
+                  title="Edit email and click away to save"
+                  onBlur={(e) => {
+                    const v = e.target.value.trim().toLowerCase();
+                    if (v && v !== u.email) updateUser(u.id, { email: v });
+                  }}
+                />
+                <p className="text-[10px] text-slate-400">
+                  Edit email then click outside to save (e.g. imthiyas@mignet.io)
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">

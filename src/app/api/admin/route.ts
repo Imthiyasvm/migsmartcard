@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
   if (action === "update-user") {
     const { userId, ...data } = body;
-    const allowed = ["status", "plan", "role", "name"];
+    const allowed = ["status", "plan", "role", "name", "email"];
     const updates: Record<string, unknown> = {};
     for (const k of allowed) {
       if (data[k] !== undefined) updates[k] = data[k];

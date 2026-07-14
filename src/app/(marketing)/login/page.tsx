@@ -46,19 +46,6 @@ function LoginForm() {
     router.refresh();
   };
 
-  const fillDemo = (type: "demo" | "admin" | "company") => {
-    if (type === "demo") {
-      setEmail("demo@migsmartcard.com");
-      setPassword("password123");
-    } else if (type === "admin") {
-      setEmail("admin@migsmartcard.com");
-      setPassword("password123");
-    } else {
-      setEmail("ceo@acme.com");
-      setPassword("password123");
-    }
-  };
-
   return (
     <Card>
       <CardHeader className="text-center">
@@ -93,38 +80,6 @@ function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-6">
-          <p className="mb-2 text-center text-xs text-slate-500">
-            Quick demo logins
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fillDemo("demo")}
-            >
-              Pro User
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fillDemo("company")}
-            >
-              Company Admin
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fillDemo("admin")}
-            >
-              Platform Admin
-            </Button>
-          </div>
-        </div>
-
         <p className="mt-6 text-center text-sm text-slate-500">
           Don&apos;t have an account?{" "}
           <Link
@@ -146,7 +101,11 @@ export default function LoginPage() {
         <div className="mb-8 flex justify-center">
           <Logo />
         </div>
-        <Suspense fallback={<div className="text-center text-slate-400">Loading...</div>}>
+        <Suspense
+          fallback={
+            <div className="text-center text-slate-400">Loading...</div>
+          }
+        >
           <LoginForm />
         </Suspense>
       </div>

@@ -11,33 +11,52 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   kind?: "photo" | "cover";
   className?: string;
-  aspect?: "square" | "wide";
+  aspect?: "square" | "wide" | "circle";
   hint?: string;
-  /** Called after successful upload with the final URL */
   onUploaded?: (url: string) => void;
+  /** center-center crop for circular avatars */
+  centerCrop?: boolean;
 }
 
-/** Compress image client-side so Vercel/Redis can store it */
-async function compressImage(
+/**
+ * Compress + optionally center-crop to square so faces fit round avatars.
+ */
+async function processImage(
   file: File,
-  kind: "photo" | "cover"
+  kind: "photo" | "cover",
+  centerCrop: boolean
 ): Promise<Blob> {
-  const maxW = kind === "cover" ? 1400 : 800;
-  const maxH = kind === "cover" ? 600 : 800;
-  const quality = 0.82;
+  const maxW = kind === "cover" ? 1400 : 900;
+  const maxH = kind === "cover" ? 600 : 900;
+  const quality = 0.84;
 
   const bitmap = await createImageBitmap(file);
-  let { width, height } = bitmap;
-  const scale = Math.min(1, maxW / width, maxH / height);
-  width = Math.round(width * scale);
-  height = Math.round(height * scale);
+  let sx = 0;
+  let sy = 0;
+  let sw = bitmap.width;
+  let sh = bitmap.height;
+
+  // Center-center square crop for profile photos (fits round masks)
+  if (kind === "photo" && centerCrop) {
+    const side = Math.min(bitmap.width, bitmap.height);
+    sx = Math.floor((bitmap.width - side) / 2);
+    sy = Math.floor((bitmap.height - side) / 2);
+    sw = side;
+    sh = side;
+  }
+
+  let dw = sw;
+  let dh = sh;
+  const scale = Math.min(1, maxW / dw, maxH / dh);
+  dw = Math.round(dw * scale);
+  dh = Math.round(dh * scale);
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = dw;
+  canvas.height = dh;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas not supported");
-  ctx.drawImage(bitmap, 0, 0, width, height);
+  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, dw, dh);
   bitmap.close();
 
   const blob: Blob | null = await new Promise((resolve) =>
@@ -56,6 +75,7 @@ export function ImageUpload({
   aspect = "square",
   hint,
   onUploaded,
+  centerCrop = true,
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -71,10 +91,13 @@ export function ImageUpload({
       let uploadBlob: Blob = file;
       let filename = file.name || "photo.jpg";
       try {
-        uploadBlob = await compressImage(file, kind);
+        uploadBlob = await processImage(
+          file,
+          kind,
+          kind === "photo" ? centerCrop : false
+        );
         filename = filename.replace(/\.\w+$/, "") + ".jpg";
       } catch {
-        // use original if compression fails
         uploadBlob = file;
       }
 
@@ -108,6 +131,13 @@ export function ImageUpload({
     }
   };
 
+  const shapeClass =
+    aspect === "wide"
+      ? "h-32 w-full sm:h-40"
+      : aspect === "circle"
+        ? "h-36 w-36 rounded-full"
+        : "h-36 w-36";
+
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
@@ -130,13 +160,18 @@ export function ImageUpload({
 
       <div
         className={cn(
-          "relative overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50",
-          aspect === "wide" ? "h-32 sm:h-40" : "h-36 w-36"
+          "relative overflow-hidden border border-dashed border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50",
+          aspect === "circle" ? "rounded-full" : "rounded-xl",
+          shapeClass
         )}
       >
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={value} alt={label} className="h-full w-full object-cover" />
+          <img
+            src={value}
+            alt={label}
+            className="h-full w-full object-cover object-center"
+          />
         ) : (
           <button
             type="button"
@@ -150,7 +185,7 @@ export function ImageUpload({
               <ImagePlus className="h-6 w-6" />
             )}
             <span className="text-xs font-medium">
-              {uploading ? "Uploading..." : "Upload image"}
+              {uploading ? "Uploading..." : "Upload"}
             </span>
           </button>
         )}
@@ -165,7 +200,7 @@ export function ImageUpload({
               disabled={uploading}
               className="h-8 text-xs"
             >
-              {uploading ? "Uploading..." : "Change"}
+              {uploading ? "..." : "Change"}
             </Button>
           </div>
         )}

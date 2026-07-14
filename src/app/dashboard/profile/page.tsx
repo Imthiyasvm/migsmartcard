@@ -732,6 +732,33 @@ export default function ProfileEditorPage() {
                 }}
                 hint="Auto-compressed. Wide image recommended."
               />
+              <div className="sm:col-span-2 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                <p className="mb-2 text-sm font-medium">Profile photo shape</p>
+                <div className="flex gap-2">
+                  {(["circle", "square"] as const).map((shape) => (
+                    <button
+                      key={shape}
+                      type="button"
+                      onClick={() =>
+                        update("theme", {
+                          ...profile.theme,
+                          photoShape: shape,
+                        })
+                      }
+                      className={`flex-1 border px-3 py-2 text-sm capitalize ${
+                        (profile.theme?.photoShape || "circle") === shape
+                          ? "border-brand-500 bg-brand-50 text-brand-700"
+                          : "border-slate-200"
+                      } ${shape === "circle" ? "rounded-full" : "rounded-xl"}`}
+                    >
+                      {shape}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Uploads are center-cropped to a square so they fit round or square frames cleanly.
+                </p>
+              </div>
               <div className="sm:col-span-2">
                 <p className="mb-2 text-xs font-medium text-slate-500">
                   Or paste image URLs

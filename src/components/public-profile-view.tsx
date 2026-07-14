@@ -99,6 +99,7 @@ export function PublicProfileView({ profile, src }: Props) {
         : "classic");
   const isGlass = layout === "glass";
   const isPremium = layout === "premium";
+  const photoShape = theme.photoShape === "square" ? "square" : "circle";
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -223,7 +224,8 @@ export function PublicProfileView({ profile, src }: Props) {
         >
           <div
             className={cn(
-              "rounded-full p-1 shadow-card",
+              "p-1 shadow-card",
+              photoShape === "square" ? "rounded-2xl" : "rounded-full",
               isGlass && "border border-white/30 bg-white/10 p-1.5 backdrop-blur-md",
               isPremium && "border-2 p-1",
               !isGlass && !isPremium && "bg-white dark:bg-slate-900"
@@ -233,7 +235,10 @@ export function PublicProfileView({ profile, src }: Props) {
             <UserAvatar
               name={profile.fullName}
               src={profile.profilePhoto}
-              className="h-28 w-28 text-2xl sm:h-32 sm:w-32"
+              className={cn(
+                "h-32 w-32 text-2xl sm:h-36 sm:w-36",
+                photoShape === "square" ? "rounded-xl" : "rounded-full"
+              )}
             />
           </div>
         </div>
