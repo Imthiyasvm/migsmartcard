@@ -140,10 +140,11 @@ export default function HomePage() {
             <div className="relative mx-auto w-full max-w-sm animate-float lg:mx-0 lg:ml-auto">
               <div className="rounded-3xl border border-white/10 bg-white/10 p-1 shadow-glow backdrop-blur-xl">
                 <div className="overflow-hidden rounded-[1.35rem] bg-white text-slate-900 shadow-2xl">
-                  <div className="h-28 bg-gradient-to-r from-brand-600 to-brand-400" />
+                  <div className="h-28 bg-cover bg-center" style={{ backgroundImage: "url(/templates/cover-classic.jpg)" }} />
                   <div className="-mt-12 flex flex-col items-center px-6 pb-6">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-brand-500 to-brand-700 text-2xl font-bold text-white shadow-lg">
-                      AR
+                    <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/templates/avatar-classic.jpg" alt="Alex Rivera" className="h-full w-full object-cover object-center" />
                     </div>
                     <h3 className="mt-3 text-xl font-bold">Alex Rivera</h3>
                     <p className="text-sm text-slate-500">Head of Product · NovaTech</p>
@@ -214,10 +215,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-2xl text-center">
             <Badge variant="default" className="mb-4">Live demos</Badge>
             <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Three premium card styles
+              Minimal. Premium. Live.
             </h2>
             <p className="mt-3 text-slate-500">
-              Classic (free), Glassmorphism & Premium Dark (Pro+). Tap a card to open the live profile.
+              Three demo profiles — Classic, Glass, and Premium. Open any card to experience the full digital profile.
             </p>
           </div>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -225,15 +226,15 @@ export default function HomePage() {
               {
                 href: "/p/alex-rivera",
                 name: "Alex Rivera",
-                role: "Classic template",
-                img: "/templates/avatar-default.jpg",
-                cover: "/templates/cover-default.jpg",
+                role: "Classic · Free",
+                img: "/templates/avatar-classic.jpg",
+                cover: "/templates/cover-classic.jpg",
                 badge: "Free",
               },
               {
                 href: "/p/jordan-lee",
                 name: "Jordan Lee",
-                role: "Glassmorphism",
+                role: "Glass · Pro+",
                 img: "/templates/avatar-glass.jpg",
                 cover: "/templates/cover-glass.jpg",
                 badge: "Pro+",
@@ -241,7 +242,7 @@ export default function HomePage() {
               {
                 href: "/p/sam-chen",
                 name: "Sam Chen",
-                role: "Premium Dark",
+                role: "Premium · Pro+",
                 img: "/templates/avatar-premium.jpg",
                 cover: "/templates/cover-premium.jpg",
                 badge: "Pro+",

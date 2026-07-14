@@ -189,6 +189,16 @@ export async function findProfileBySlug(
   await ensureDbReady();
   const key = (slug || "").toLowerCase().trim();
   if (!key) return undefined;
+
+  // Marketing demos always use polished static templates (ignore Redis drift)
+  try {
+    const { getDemoProfile } = await import("./demo-profiles");
+    const demo = getDemoProfile(key);
+    if (demo) return demo;
+  } catch {
+    /* ignore */
+  }
+
   const local =
     db.profiles.getBySlug(key) ||
     db.profiles.getAll().find((p) => p.slug?.toLowerCase() === key);
@@ -375,8 +385,8 @@ function buildSeedData(): Omit<Store, "seeded"> {
     fullName: "Alex Rivera",
     jobTitle: "Head of Product",
     companyName: "NovaTech Solutions",
-    profilePhoto: "/templates/avatar-default.jpg",
-    coverImage: "/templates/cover-default.jpg",
+    profilePhoto: "/templates/avatar-classic.jpg",
+    coverImage: "/templates/cover-classic.jpg",
     bio: "Product leader passionate about building digital experiences that connect people. 10+ years in SaaS and fintech. Let's connect!",
     phone: "+971 50 123 4567",
     email: "alex@novatech.io",

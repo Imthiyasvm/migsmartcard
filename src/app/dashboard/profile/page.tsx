@@ -822,12 +822,10 @@ export default function ProfileEditorPage() {
                       const next = {
                         ...profile,
                         theme: nextTheme,
-                        profilePhoto: profile.profilePhoto || tpl.avatar,
-                        coverImage: profile.coverImage || tpl.cover,
+                        // Apply polished template mockup assets (user can re-upload after)
+                        profilePhoto: tpl.avatar,
+                        coverImage: tpl.cover,
                       };
-                      // If no custom photo yet, apply demo avatar/cover
-                      if (!profile.profilePhoto) next.profilePhoto = tpl.avatar;
-                      if (!profile.coverImage) next.coverImage = tpl.cover;
                       setProfile(next);
                       setSaving(true);
                       const res = await fetch("/api/profile", {
