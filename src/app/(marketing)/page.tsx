@@ -142,12 +142,18 @@ export default function HomePage() {
                 <div className="overflow-hidden rounded-[1.35rem] bg-white text-slate-900 shadow-2xl">
                   <div className="h-28 bg-cover bg-center" style={{ backgroundImage: "url(/templates/cover-classic.jpg)" }} />
                   <div className="-mt-12 flex flex-col items-center px-6 pb-6">
-                    <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-lg">
+                    <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#E8E6E3] shadow-lg">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/templates/avatar-classic.jpg" alt="Alex Rivera" className="h-full w-full object-cover object-center" />
+                      <img
+                        src="/templates/avatar-classic.jpg"
+                        alt="Alex Rivera"
+                        width={96}
+                        height={96}
+                        className="h-24 w-24 max-w-none object-cover object-[center_15%]"
+                      />
                     </div>
                     <h3 className="mt-3 text-xl font-bold">Alex Rivera</h3>
-                    <p className="text-sm text-slate-500">Head of Product · NovaTech</p>
+                    <p className="text-sm text-slate-500">Head of Product · Mignet Technologies</p>
                     <div className="mt-4 flex w-full gap-2">
                       <div className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-600 py-2.5 text-xs font-semibold text-white">
                         <Download className="h-3.5 w-3.5" /> Save Contact
@@ -157,7 +163,7 @@ export default function HomePage() {
                       </div>
                     </div>
                     <div className="mt-4 w-full space-y-2">
-                      {["+971 50 123 4567", "alex@novatech.io", "novatech.io"].map(
+                      {["+971 50 123 4567", "alex@mignet.io", "mignet.io"].map(
                         (item) => (
                           <div
                             key={item}
@@ -194,7 +200,7 @@ export default function HomePage() {
             Trusted by professionals at leading companies worldwide
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-8 opacity-50 grayscale">
-            {["NovaTech", "Acme Corp", "Globex", "Initech", "Umbrella"].map(
+            {["Mignet", "Acme Corp", "Globex", "Initech", "Umbrella"].map(
               (name) => (
                 <span
                   key={name}
@@ -226,7 +232,7 @@ export default function HomePage() {
               {
                 href: "/p/alex-rivera",
                 name: "Alex Rivera",
-                role: "Classic · Free",
+                role: "Head of Product · Mignet Technologies",
                 img: "/templates/avatar-classic.jpg",
                 cover: "/templates/cover-classic.jpg",
                 badge: "Free",
@@ -261,10 +267,16 @@ export default function HomePage() {
                     {d.badge}
                   </span>
                 </div>
-                <div className="-mt-10 flex flex-col items-center px-4 pb-6">
-                  <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white shadow-lg dark:border-slate-900">
+                <div className="relative z-10 -mt-12 flex flex-col items-center px-4 pb-6">
+                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#E8E6E3] shadow-lg ring-1 ring-black/5 dark:border-slate-900">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={d.img} alt={d.name} className="h-full w-full object-cover object-center" />
+                    <img
+                      src={d.img}
+                      alt={d.name}
+                      width={96}
+                      height={96}
+                      className="h-24 w-24 max-w-none object-cover object-[center_15%]"
+                    />
                   </div>
                   <h3 className="mt-3 font-bold group-hover:text-brand-600">{d.name}</h3>
                   <p className="text-xs text-slate-500">{d.role}</p>

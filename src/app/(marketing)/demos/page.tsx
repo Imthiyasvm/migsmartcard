@@ -48,12 +48,14 @@ export default function DemosPage() {
                 </span>
               </div>
               <div className="-mt-11 flex flex-col items-center px-4 pb-7">
-                <div className="h-[5.5rem] w-[5.5rem] overflow-hidden rounded-full border-4 border-white shadow-lg dark:border-slate-900">
+                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#E8E6E3] shadow-lg ring-1 ring-black/5 dark:border-slate-900">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={p.profilePhoto}
                     alt={p.fullName}
-                    className="h-full w-full object-cover object-center"
+                    width={96}
+                    height={96}
+                    className="h-24 w-24 max-w-none object-cover object-[center_15%]"
                   />
                 </div>
                 <h2 className="mt-3 text-lg font-bold group-hover:text-brand-600">

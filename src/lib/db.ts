@@ -384,13 +384,13 @@ function buildSeedData(): Omit<Store, "seeded"> {
     isPrimary: true,
     fullName: "Alex Rivera",
     jobTitle: "Head of Product",
-    companyName: "NovaTech Solutions",
+    companyName: "Mignet Technologies",
     profilePhoto: "/templates/avatar-classic.jpg",
     coverImage: "/templates/cover-classic.jpg",
     bio: "Product leader passionate about building digital experiences that connect people. 10+ years in SaaS and fintech. Let's connect!",
     phone: "+971 50 123 4567",
-    email: "alex@novatech.io",
-    website: "https://novatech.io",
+    email: "alex@mignet.io",
+    website: "https://mignet.io",
     address: "Dubai Internet City, Dubai, UAE",
     city: "Dubai",
     country: "United Arab Emirates",
@@ -406,8 +406,8 @@ function buildSeedData(): Omit<Store, "seeded"> {
     customLinks: [
       {
         id: "link-1",
-        title: "My Portfolio",
-        url: "https://alexrivera.dev",
+        title: "Website",
+        url: "https://mignet.io",
         icon: "globe",
       },
       {
