@@ -18,24 +18,24 @@ import { CardOrder } from "@/types";
 const DESIGNS = [
   {
     id: "premium-metal",
-    name: "Premium Metal",
+    name: "Premium Metal Card",
     price: 59,
-    desc: "Engraved MigSmartCard metal NFC — official brand finish",
-    image: "/shop/premium-metal.jpg",
+    desc: "Premium metal NFC card with engraved MigSmartCard branding",
+    image: "/shop/premium-metal.webp",
   },
   {
     id: "wood-grain",
-    name: "Signature Pastel",
-    price: 49,
-    desc: "Pastel metal NFC with engraved MigSmartCard logo",
-    image: "/shop/wood-grain.jpg",
+    name: "Premium Wood Grain NFC Card",
+    price: 45,
+    desc: "Premium wood grain NFC card with engraved MigSmartCard branding",
+    image: "/shop/wood-grain.webp",
   },
   {
     id: "custom-print",
-    name: "Custom Brand",
-    price: 55,
-    desc: "Same premium engraved look — custom colors available on order",
-    image: "/shop/custom-print.jpg",
+    name: "Premium Custom Printed NFC Card",
+    price: 49,
+    desc: "Premium custom printed NFC card with engraved MigSmartCard branding",
+    image: "/shop/custom-print.webp",
   },
 ];
 
