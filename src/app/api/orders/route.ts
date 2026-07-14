@@ -5,11 +5,9 @@ import { db, ensureDbReady } from "@/lib/db";
 import { createId } from "@/lib/id";
 
 const DESIGN_PRICES: Record<string, number> = {
-  "classic-black": 29,
-  "classic-white": 29,
   "premium-metal": 59,
   "wood-grain": 45,
-  "custom-print": 39,
+  "custom-print": 49,
 };
 
 export async function GET() {

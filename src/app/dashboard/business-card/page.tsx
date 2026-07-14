@@ -19,49 +19,53 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { DigitalProfile } from "@/types";
 import { getPlan } from "@/lib/plans";
 import { buildSharePath } from "@/lib/share-token";
 import { cn, getInitials } from "@/lib/utils";
 
 type Orientation = "landscape" | "portrait";
-type StyleId = "midnight" | "ocean" | "minimal" | "gold";
+type StyleId = "white" | "black" | "custom";
 
 const STYLES: Record<
   StyleId,
-  { name: string; bg0: string; bg1: string; fg: string; accent: string; muted: string }
+  {
+    name: string;
+    bg0: string;
+    bg1: string;
+    fg: string;
+    accent: string;
+    muted: string;
+    qrPad: string;
+  }
 > = {
-  midnight: {
-    name: "Midnight",
-    bg0: "#0b1224",
-    bg1: "#1a5ff5",
-    fg: "#ffffff",
-    accent: "#59a5ff",
-    muted: "rgba(255,255,255,0.72)",
-  },
-  ocean: {
-    name: "Ocean",
-    bg0: "#062a3f",
-    bg1: "#0b6e99",
-    fg: "#ffffff",
-    accent: "#7dd3fc",
-    muted: "rgba(255,255,255,0.75)",
-  },
-  minimal: {
-    name: "Minimal Light",
+  white: {
+    name: "White",
     bg0: "#ffffff",
-    bg1: "#e2e8f0",
+    bg1: "#f1f5f9",
     fg: "#0f172a",
     accent: "#1a5ff5",
     muted: "#64748b",
+    qrPad: "#ffffff",
   },
-  gold: {
-    name: "Executive",
-    bg0: "#1c1917",
-    bg1: "#78350f",
+  black: {
+    name: "Black",
+    bg0: "#0a0a0a",
+    bg1: "#1c1917",
     fg: "#fafaf9",
     accent: "#fbbf24",
-    muted: "rgba(250,250,249,0.7)",
+    muted: "rgba(250,250,249,0.72)",
+    qrPad: "#ffffff",
+  },
+  custom: {
+    name: "Custom",
+    bg0: "#0b1224",
+    bg1: "#1a5ff5",
+    fg: "#ffffff",
+    accent: "#7dd3fc",
+    muted: "rgba(255,255,255,0.75)",
+    qrPad: "#ffffff",
   },
 };
 
@@ -75,6 +79,24 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
 export default function BusinessCardDesignerPage() {
   const { data: session } = useSession();
   const planId = session?.user?.plan || "free";
@@ -84,7 +106,9 @@ export default function BusinessCardDesignerPage() {
   const [profiles, setProfiles] = useState<DigitalProfile[]>([]);
   const [profileId, setProfileId] = useState("");
   const [orientation, setOrientation] = useState<Orientation>("landscape");
-  const [styleId, setStyleId] = useState<StyleId>("midnight");
+  const [styleId, setStyleId] = useState<StyleId>("black");
+  const [customAccent, setCustomAccent] = useState("#1a5ff5");
+  const [customBg, setCustomBg] = useState("#0b1224");
   const [qrUrl, setQrUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -116,37 +140,52 @@ export default function BusinessCardDesignerPage() {
     } catch {
       /* keep short */
     }
-    setQrUrl(`/api/qr?url=${encodeURIComponent(target)}&format=png&size=512`);
+    setQrUrl(`/api/qr?url=${encodeURIComponent(target)}&format=png&size=640`);
   }, [profile]);
 
-  const style = STYLES[styleId];
   const isLandscape = orientation === "landscape";
 
-  // Draw preview + export canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !profile) return;
 
-    const W = isLandscape ? 1050 : 675;
-    const H = isLandscape ? 600 : 1050;
+    const baseStyle = STYLES[styleId];
+    const style =
+      styleId === "custom"
+        ? {
+            ...baseStyle,
+            bg0: customBg,
+            bg1: customAccent,
+            accent: customAccent,
+          }
+        : baseStyle;
+
+    // Higher res premium card
+    const W = isLandscape ? 1200 : 750;
+    const H = isLandscape ? 680 : 1200;
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     let cancelled = false;
 
     (async () => {
-      // Background gradient
       const g = ctx.createLinearGradient(0, 0, W, H);
       g.addColorStop(0, style.bg0);
       g.addColorStop(1, style.bg1);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
 
+      // Premium edge frame
+      ctx.strokeStyle =
+        styleId === "white" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 3;
+      roundRect(ctx, 18, 18, W - 36, H - 36, 28);
+      ctx.stroke();
+
       // Soft highlight
-      const rg = ctx.createRadialGradient(W * 0.2, 0, 10, W * 0.2, 0, W * 0.6);
-      rg.addColorStop(0, "rgba(255,255,255,0.16)");
+      const rg = ctx.createRadialGradient(W * 0.15, 0, 20, W * 0.2, 0, W * 0.55);
+      rg.addColorStop(0, "rgba(255,255,255,0.14)");
       rg.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = rg;
       ctx.fillRect(0, 0, W, H);
@@ -166,27 +205,38 @@ export default function BusinessCardDesignerPage() {
         if (photo) {
           ctx.drawImage(photo, x, y, size, size);
         } else {
-          ctx.fillStyle = "rgba(255,255,255,0.12)";
+          ctx.fillStyle =
+            styleId === "white" ? "#e2e8f0" : "rgba(255,255,255,0.12)";
           ctx.fillRect(x, y, size, size);
           ctx.fillStyle = style.accent;
-          ctx.font = `bold ${Math.floor(size * 0.32)}px Inter, system-ui, sans-serif`;
+          ctx.font = `bold ${Math.floor(size * 0.3)}px Inter, system-ui, sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText(getInitials(profile.fullName || "U"), x + size / 2, y + size / 2);
+          ctx.fillText(
+            getInitials(profile.fullName || "U"),
+            x + size / 2,
+            y + size / 2
+          );
         }
         ctx.restore();
         ctx.beginPath();
         ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
         ctx.strokeStyle = style.accent;
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 5;
         ctx.stroke();
       };
 
       const drawQr = (x: number, y: number, size: number) => {
-        const pad = 12;
-        ctx.fillStyle = "#ffffff";
-        roundRect(ctx, x, y, size, size, 16);
+        const pad = 16;
+        ctx.fillStyle = style.qrPad;
+        roundRect(ctx, x, y, size, size, 20);
         ctx.fill();
+        // subtle border
+        ctx.strokeStyle =
+          styleId === "white" ? "rgba(15,23,42,0.08)" : "rgba(0,0,0,0.06)";
+        ctx.lineWidth = 2;
+        roundRect(ctx, x, y, size, size, 20);
+        ctx.stroke();
         if (qr) {
           ctx.drawImage(qr, x + pad, y + pad, size - pad * 2, size - pad * 2);
         }
@@ -197,72 +247,86 @@ export default function BusinessCardDesignerPage() {
         .replace(/\/$/, "");
 
       if (isLandscape) {
-        drawAvatar(48, H / 2 - 80, 120);
+        // Larger photo + QR for premium print feel
+        const avatar = 168;
+        const qrSize = 220;
+        drawAvatar(56, H / 2 - avatar / 2, avatar);
         ctx.textAlign = "left";
         ctx.fillStyle = style.fg;
-        ctx.font = "bold 44px Inter, system-ui, sans-serif";
-        ctx.fillText(profile.fullName || "Your Name", 200, H / 2 - 50, 520);
+        ctx.font = "bold 52px Inter, system-ui, sans-serif";
+        ctx.fillText(profile.fullName || "Your Name", 260, H / 2 - 70, 560);
         if (profile.jobTitle) {
           ctx.fillStyle = style.muted;
-          ctx.font = "22px Inter, system-ui, sans-serif";
-          ctx.fillText(profile.jobTitle, 200, H / 2 - 14, 520);
+          ctx.font = "26px Inter, system-ui, sans-serif";
+          ctx.fillText(profile.jobTitle, 260, H / 2 - 28, 560);
         }
         ctx.fillStyle = style.accent;
-        ctx.font = "bold 24px Inter, system-ui, sans-serif";
-        ctx.fillText(profile.companyName || "Company Name", 200, H / 2 + 36, 520);
+        ctx.font = "bold 28px Inter, system-ui, sans-serif";
+        ctx.fillText(
+          profile.companyName || "Company Name",
+          260,
+          H / 2 + 28,
+          560
+        );
         ctx.fillStyle = style.muted;
-        ctx.font = "20px Inter, system-ui, sans-serif";
-        let ty = H / 2 + 70;
+        ctx.font = "22px Inter, system-ui, sans-serif";
+        let ty = H / 2 + 68;
         if (website) {
-          ctx.fillText(website, 200, ty, 520);
-          ty += 30;
+          ctx.fillText(website, 260, ty, 560);
+          ty += 32;
         }
         if (profile.email) {
-          ctx.fillText(profile.email, 200, ty, 520);
-          ty += 28;
+          ctx.fillText(profile.email, 260, ty, 560);
+          ty += 30;
         }
-        if (profile.phone) {
-          ctx.fillText(profile.phone, 200, ty, 520);
-        }
-        drawQr(W - 220, H / 2 - 100, 180);
+        if (profile.phone) ctx.fillText(profile.phone, 260, ty, 560);
+
+        drawQr(W - 280, H / 2 - qrSize / 2, qrSize);
         ctx.fillStyle = style.muted;
-        ctx.font = "14px Inter, system-ui, sans-serif";
+        ctx.font = "15px Inter, system-ui, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Scan to open digital card", W - 130, H / 2 + 100);
+        ctx.fillText("Scan digital card", W - 170, H / 2 + qrSize / 2 + 28);
       } else {
-        drawAvatar(W / 2 - 70, 70, 140);
+        const avatar = 200;
+        const qrSize = 260;
+        drawAvatar(W / 2 - avatar / 2, 72, avatar);
         ctx.textAlign = "center";
         ctx.fillStyle = style.fg;
-        ctx.font = "bold 42px Inter, system-ui, sans-serif";
-        ctx.fillText(profile.fullName || "Your Name", W / 2, 260, W - 80);
+        ctx.font = "bold 48px Inter, system-ui, sans-serif";
+        ctx.fillText(profile.fullName || "Your Name", W / 2, 330, W - 80);
         if (profile.jobTitle) {
           ctx.fillStyle = style.muted;
-          ctx.font = "22px Inter, system-ui, sans-serif";
-          ctx.fillText(profile.jobTitle, W / 2, 298, W - 80);
+          ctx.font = "24px Inter, system-ui, sans-serif";
+          ctx.fillText(profile.jobTitle, W / 2, 372, W - 80);
         }
         ctx.fillStyle = style.accent;
-        ctx.font = "bold 26px Inter, system-ui, sans-serif";
-        ctx.fillText(profile.companyName || "Company Name", W / 2, 350, W - 80);
+        ctx.font = "bold 28px Inter, system-ui, sans-serif";
+        ctx.fillText(
+          profile.companyName || "Company Name",
+          W / 2,
+          430,
+          W - 80
+        );
         ctx.fillStyle = style.muted;
-        ctx.font = "20px Inter, system-ui, sans-serif";
-        if (website) ctx.fillText(website, W / 2, 388, W - 80);
-        drawQr(W / 2 - 110, H - 320, 220);
+        ctx.font = "22px Inter, system-ui, sans-serif";
+        if (website) ctx.fillText(website, W / 2, 472, W - 80);
+
+        drawQr(W / 2 - qrSize / 2, H - 400, qrSize);
         ctx.fillStyle = style.muted;
         ctx.font = "16px Inter, system-ui, sans-serif";
-        ctx.fillText("Scan to connect", W / 2, H - 80);
+        ctx.fillText("Scan to connect", W / 2, H - 110);
       }
 
-      // Brand mark
       ctx.textAlign = "left";
       ctx.fillStyle = style.muted;
-      ctx.font = "12px Inter, system-ui, sans-serif";
-      ctx.fillText("MigSmartCard", 28, H - 24);
+      ctx.font = "13px Inter, system-ui, sans-serif";
+      ctx.fillText("MigSmartCard", 36, H - 28);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [profile, orientation, styleId, qrUrl, isLandscape, style]);
+  }, [profile, orientation, styleId, qrUrl, isLandscape, customAccent, customBg]);
 
   const downloadPng = () => {
     const canvas = canvasRef.current;
@@ -270,7 +334,7 @@ export default function BusinessCardDesignerPage() {
     setExporting(true);
     try {
       const a = document.createElement("a");
-      a.download = `${profile.slug || "business-card"}-${orientation}.png`;
+      a.download = `${profile.slug || "business-card"}-${orientation}-${styleId}.png`;
       a.href = canvas.toDataURL("image/png");
       a.click();
     } finally {
@@ -293,16 +357,11 @@ export default function BusinessCardDesignerPage() {
           <Crown className="h-7 w-7" />
         </div>
         <h1 className="font-display text-2xl font-bold">
-          Printable business cards
+          Premium business cards
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Auto-generate portrait or landscape cards with photo, name, company,
-          website, and QR. Available on <strong>Pro</strong>,{" "}
-          <strong>Business</strong>, and <strong>Enterprise</strong>.
-        </p>
-        <p className="mt-2 text-xs text-slate-400">
-          Your plan:{" "}
-          <span className="font-semibold capitalize">{plan.name}</span>
+          White, black, or custom premium print layouts with large photo + QR.
+          Available on <strong>Pro</strong> and above.
         </p>
         <Button className="mt-6" asChild>
           <Link href="/dashboard/billing">Upgrade plan</Link>
@@ -330,18 +389,12 @@ export default function BusinessCardDesignerPage() {
             Business card designer
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Auto-generated print layouts with QR · Pro+ feature
+            Premium print models · large photo & QR · Pro+
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            onClick={downloadPng}
-            loading={exporting}
-          >
-            <Download className="h-4 w-4" /> Download PNG
-          </Button>
-        </div>
+        <Button size="sm" onClick={downloadPng} loading={exporting}>
+          <Download className="h-4 w-4" /> Download PNG
+        </Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -349,12 +402,9 @@ export default function BusinessCardDesignerPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Source card</CardTitle>
-              <CardDescription>
-                Uses data from your digital profile
-              </CardDescription>
+              <CardDescription>From your digital profile</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <label className="block text-sm font-medium">Profile</label>
               <select
                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
                 value={profile.id}
@@ -362,13 +412,13 @@ export default function BusinessCardDesignerPage() {
               >
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.cardName || p.fullName} (/p/{p.slug})
+                    {p.cardName || p.fullName}
                   </option>
                 ))}
               </select>
               <Button variant="outline" size="sm" asChild className="w-full">
                 <Link href="/dashboard/profile">
-                  <RefreshCw className="h-4 w-4" /> Edit profile data
+                  <RefreshCw className="h-4 w-4" /> Edit profile
                 </Link>
               </Button>
             </CardContent>
@@ -408,54 +458,86 @@ export default function BusinessCardDesignerPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Style</CardTitle>
+              <CardTitle className="text-base">Premium models</CardTitle>
+              <CardDescription>White · Black · Custom</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2">
-              {(Object.keys(STYLES) as StyleId[]).map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setStyleId(id)}
-                  className={cn(
-                    "rounded-xl border p-3 text-left text-xs font-semibold",
-                    styleId === id
-                      ? "border-brand-500 ring-1 ring-brand-500"
-                      : "border-slate-200 dark:border-slate-700"
-                  )}
-                  style={{
-                    background: `linear-gradient(135deg, ${STYLES[id].bg0}, ${STYLES[id].bg1})`,
-                    color: STYLES[id].fg,
-                  }}
-                >
-                  {STYLES[id].name}
-                </button>
-              ))}
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(STYLES) as StyleId[]).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setStyleId(id)}
+                    className={cn(
+                      "rounded-xl border p-3 text-center text-xs font-semibold",
+                      styleId === id
+                        ? "border-brand-500 ring-1 ring-brand-500"
+                        : "border-slate-200 dark:border-slate-700"
+                    )}
+                    style={{
+                      background: `linear-gradient(135deg, ${STYLES[id].bg0}, ${STYLES[id].bg1})`,
+                      color: STYLES[id].fg,
+                    }}
+                  >
+                    {STYLES[id].name}
+                  </button>
+                ))}
+              </div>
+              {styleId === "custom" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Accent
+                    </label>
+                    <input
+                      type="color"
+                      value={customAccent}
+                      onChange={(e) => setCustomAccent(e.target.value)}
+                      className="h-10 w-full cursor-pointer rounded-lg border"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      Background
+                    </label>
+                    <input
+                      type="color"
+                      value={customBg}
+                      onChange={(e) => setCustomBg(e.target.value)}
+                      className="h-10 w-full cursor-pointer rounded-lg border"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Input
+                      label="Accent hex"
+                      value={customAccent}
+                      onChange={(e) => setCustomAccent(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="space-y-2 p-4 text-xs text-slate-500">
               <p>
-                Includes: profile photo, name, company, website, and QR to your
-                digital card.
+                Large profile photo + large QR for premium print quality.
               </p>
-              <p>
-                Landscape ≈ 3.5″ × 2″ · Portrait ≈ 2″ × 3.5″ (export is high-res
-                PNG).
-              </p>
+              <p>Landscape ≈ 3.5″×2″ · Portrait ≈ 2″×3.5″ (high-res PNG).</p>
               <Badge className="capitalize">{plan.name}</Badge>
             </CardContent>
           </Card>
         </div>
 
-        <div className="flex flex-col items-center justify-start rounded-2xl border border-slate-200 bg-slate-100/80 p-6 dark:border-slate-800 dark:bg-slate-900/40">
+        <div className="flex flex-col items-center rounded-2xl border border-slate-200 bg-slate-100/80 p-6 dark:border-slate-800 dark:bg-slate-900/40">
           <p className="mb-4 text-xs font-medium uppercase tracking-wider text-slate-400">
             Live preview
           </p>
           <div
             className={cn(
               "overflow-hidden rounded-2xl shadow-card",
-              isLandscape ? "w-full max-w-[560px]" : "w-full max-w-[320px]"
+              isLandscape ? "w-full max-w-[600px]" : "w-full max-w-[340px]"
             )}
           >
             <canvas
@@ -464,30 +546,8 @@ export default function BusinessCardDesignerPage() {
               style={{ display: "block" }}
             />
           </div>
-          <p className="mt-4 max-w-md text-center text-xs text-slate-400">
-            Click <strong>Download PNG</strong> to save for print shops or
-            digital sharing. QR opens your MigSmartCard digital profile.
-          </p>
         </div>
       </div>
     </div>
   );
-}
-
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number
-) {
-  const radius = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
 }

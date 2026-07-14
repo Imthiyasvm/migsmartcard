@@ -13,6 +13,38 @@ interface ImageUploadProps {
   className?: string;
   aspect?: "square" | "wide";
   hint?: string;
+  /** Called after successful upload with the final URL */
+  onUploaded?: (url: string) => void;
+}
+
+/** Compress image client-side so Vercel/Redis can store it */
+async function compressImage(
+  file: File,
+  kind: "photo" | "cover"
+): Promise<Blob> {
+  const maxW = kind === "cover" ? 1400 : 800;
+  const maxH = kind === "cover" ? 600 : 800;
+  const quality = 0.82;
+
+  const bitmap = await createImageBitmap(file);
+  let { width, height } = bitmap;
+  const scale = Math.min(1, maxW / width, maxH / height);
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas not supported");
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  const blob: Blob | null = await new Promise((resolve) =>
+    canvas.toBlob((b) => resolve(b), "image/jpeg", quality)
+  );
+  if (!blob) throw new Error("Compression failed");
+  return blob;
 }
 
 export function ImageUpload({
@@ -23,6 +55,7 @@ export function ImageUpload({
   className,
   aspect = "square",
   hint,
+  onUploaded,
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -35,9 +68,30 @@ export function ImageUpload({
     setError("");
     setUploading(true);
     try {
+      let uploadBlob: Blob = file;
+      let filename = file.name || "photo.jpg";
+      try {
+        uploadBlob = await compressImage(file, kind);
+        filename = filename.replace(/\.\w+$/, "") + ".jpg";
+      } catch {
+        // use original if compression fails
+        uploadBlob = file;
+      }
+
+      if (uploadBlob.size > 2.5 * 1024 * 1024) {
+        setError("Image still too large. Choose a smaller photo.");
+        return;
+      }
+
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append(
+        "file",
+        new File([uploadBlob], filename, {
+          type: uploadBlob.type || "image/jpeg",
+        })
+      );
       fd.append("kind", kind);
+
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) {
@@ -45,8 +99,9 @@ export function ImageUpload({
         return;
       }
       onChange(data.url);
+      onUploaded?.(data.url);
     } catch {
-      setError("Upload failed");
+      setError("Upload failed — try a smaller JPG/PNG");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -62,7 +117,10 @@ export function ImageUpload({
         {value && (
           <button
             type="button"
-            onClick={() => onChange("")}
+            onClick={() => {
+              onChange("");
+              onUploaded?.("");
+            }}
             className="flex items-center gap-1 text-xs text-red-500 hover:underline"
           >
             <Trash2 className="h-3 w-3" /> Remove
@@ -78,11 +136,7 @@ export function ImageUpload({
       >
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={value}
-            alt={label}
-            className="h-full w-full object-cover"
-          />
+          <img src={value} alt={label} className="h-full w-full object-cover" />
         ) : (
           <button
             type="button"

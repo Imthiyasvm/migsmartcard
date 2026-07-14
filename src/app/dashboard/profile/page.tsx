@@ -34,8 +34,12 @@ import { DigitalProfile, CustomLink, SocialLinks, ProfileTheme } from "@/types";
 import { createId } from "@/lib/id";
 import { PublicProfileView } from "@/components/public-profile-view";
 import { ImageUpload } from "@/components/image-upload";
+import { CARD_TEMPLATES, canUseTemplate } from "@/lib/templates";
+import { useSession } from "next-auth/react";
 
 export default function ProfileEditorPage() {
+  const { data: session } = useSession();
+  const planId = session?.user?.plan || "free";
   const [profiles, setProfiles] = useState<DigitalProfile[]>([]);
   const [profile, setProfile] = useState<DigitalProfile | null>(null);
   const [maxCards, setMaxCards] = useState(1);
@@ -582,6 +586,7 @@ export default function ProfileEditorPage() {
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="social">Social & Links</TabsTrigger>
           <TabsTrigger value="theme">Theme</TabsTrigger>
@@ -675,7 +680,28 @@ export default function ProfileEditorPage() {
                 aspect="square"
                 value={profile.profilePhoto || ""}
                 onChange={(url) => update("profilePhoto", url)}
-                hint="Square works best (e.g. 400×400)"
+                onUploaded={async (url) => {
+                  if (!profile) return;
+                  const next = { ...profile, profilePhoto: url, isPublic: true, forcePublic: true };
+                  setProfile(next);
+                  setSaving(true);
+                  try {
+                    const res = await fetch("/api/profile", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ ...next, id: next.id }),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.profile) {
+                      setProfile(data.profile);
+                      setMessage("Profile photo saved");
+                    } else setMessage(data.error || "Photo uploaded but save failed — click Save");
+                  } catch {
+                    setMessage("Photo uploaded — click Save to keep it");
+                  }
+                  setSaving(false);
+                }}
+                hint="Auto-compressed. Square works best. Click Save if needed."
               />
               <ImageUpload
                 label="Cover image"
@@ -683,7 +709,28 @@ export default function ProfileEditorPage() {
                 aspect="wide"
                 value={profile.coverImage || ""}
                 onChange={(url) => update("coverImage", url)}
-                hint="Wide image (e.g. 1200×400)"
+                onUploaded={async (url) => {
+                  if (!profile) return;
+                  const next = { ...profile, coverImage: url, isPublic: true, forcePublic: true };
+                  setProfile(next);
+                  setSaving(true);
+                  try {
+                    const res = await fetch("/api/profile", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ ...next, id: next.id }),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.profile) {
+                      setProfile(data.profile);
+                      setMessage("Cover image saved");
+                    } else setMessage(data.error || "Cover uploaded but save failed — click Save");
+                  } catch {
+                    setMessage("Cover uploaded — click Save to keep it");
+                  }
+                  setSaving(false);
+                }}
+                hint="Auto-compressed. Wide image recommended."
               />
               <div className="sm:col-span-2">
                 <p className="mb-2 text-xs font-medium text-slate-500">
@@ -714,6 +761,108 @@ export default function ProfileEditorPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        
+        <TabsContent value="templates" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Card templates</CardTitle>
+              <CardDescription>
+                Free: Classic only. Pro+: Glassmorphism & Premium Dark with demo 3D avatars.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3">
+              {CARD_TEMPLATES.map((tpl) => {
+                const allowed = canUseTemplate(planId, tpl.id);
+                const active =
+                  (profile.theme?.templateId || profile.theme?.layout || "default") ===
+                    tpl.id ||
+                  (profile.theme?.layout === tpl.layout && tpl.id !== "default");
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    disabled={!allowed}
+                    onClick={async () => {
+                      if (!allowed || !profile) return;
+                      const nextTheme = {
+                        ...profile.theme,
+                        ...tpl.theme,
+                        templateId: tpl.id,
+                        layout: tpl.layout,
+                      };
+                      const next = {
+                        ...profile,
+                        theme: nextTheme,
+                        profilePhoto: profile.profilePhoto || tpl.avatar,
+                        coverImage: profile.coverImage || tpl.cover,
+                      };
+                      // If no custom photo yet, apply demo avatar/cover
+                      if (!profile.profilePhoto) next.profilePhoto = tpl.avatar;
+                      if (!profile.coverImage) next.coverImage = tpl.cover;
+                      setProfile(next);
+                      setSaving(true);
+                      const res = await fetch("/api/profile", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          ...next,
+                          id: next.id,
+                          forcePublic: true,
+                          isPublic: true,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.profile) {
+                        setProfile(data.profile);
+                        setMessage(`Template “${tpl.name}” applied`);
+                      } else {
+                        setMessage(data.error || "Could not apply template");
+                      }
+                      setSaving(false);
+                    }}
+                    className={`overflow-hidden rounded-2xl border-2 text-left transition ${
+                      active
+                        ? "border-brand-500 shadow-glow"
+                        : allowed
+                          ? "border-slate-200 hover:border-slate-300 dark:border-slate-700"
+                          : "cursor-not-allowed border-slate-200 opacity-60 dark:border-slate-800"
+                    }`}
+                  >
+                    <div className="relative aspect-[16/10] bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={tpl.cover}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute -bottom-6 left-4 h-14 w-14 overflow-hidden rounded-full border-2 border-white shadow">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={tpl.avatar}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      {!allowed && (
+                        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[10px] font-semibold text-white">
+                          <Crown className="h-3 w-3 text-amber-300" /> Pro+
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-4 pb-4 pt-8">
+                      <p className="font-semibold">{tpl.name}</p>
+                      <p className="mt-1 text-xs text-slate-500">{tpl.description}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </CardContent>
+          </Card>
+          <p className="text-xs text-slate-500">
+            Applying a template sets colors/layout. Demo avatar & cover are only applied if you have not uploaded your own photos yet.
+          </p>
         </TabsContent>
 
         <TabsContent value="contact" className="space-y-4">

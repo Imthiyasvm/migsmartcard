@@ -17,39 +17,25 @@ import { CardOrder } from "@/types";
 
 const DESIGNS = [
   {
-    id: "classic-black",
-    name: "Classic Black",
-    price: 29,
-    desc: "Matte black PVC with NFC chip",
-    gradient: "from-slate-800 to-slate-950",
-  },
-  {
-    id: "classic-white",
-    name: "Classic White",
-    price: 29,
-    desc: "Clean white PVC with subtle branding",
-    gradient: "from-slate-100 to-white",
-  },
-  {
     id: "premium-metal",
     name: "Premium Metal",
     price: 59,
-    desc: "Brushed stainless steel NFC card",
-    gradient: "from-slate-400 to-slate-600",
+    desc: "Brushed stainless steel NFC card — premium weight & finish",
+    image: "/shop/premium-metal.jpg",
   },
   {
     id: "wood-grain",
     name: "Wood Grain",
     price: 45,
-    desc: "Eco-friendly wood NFC card",
-    gradient: "from-amber-700 to-amber-900",
+    desc: "Eco-friendly real wood NFC card with natural texture",
+    image: "/shop/wood-grain.jpg",
   },
   {
     id: "custom-print",
     name: "Custom Print",
-    price: 39,
-    desc: "Full-color print with your logo",
-    gradient: "from-brand-500 to-brand-700",
+    price: 49,
+    desc: "Full-color custom design with your logo & brand colors",
+    image: "/shop/custom-print.jpg",
   },
 ];
 
@@ -115,7 +101,7 @@ export default function ShopPage() {
       <div>
         <h1 className="font-display text-2xl font-bold">Order NFC Cards</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Physical MigSmartCards with embedded NFC chips
+          Premium physical MigSmartCards with embedded NFC
         </p>
       </div>
 
@@ -125,28 +111,31 @@ export default function ShopPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3">
         {DESIGNS.map((d) => (
           <button
             key={d.id}
+            type="button"
             onClick={() => setSelected(d.id)}
-            className={`rounded-2xl border-2 p-4 text-left transition ${
+            className={`overflow-hidden rounded-2xl border-2 text-left transition ${
               selected === d.id
                 ? "border-brand-500 shadow-glow"
                 : "border-slate-200 hover:border-slate-300 dark:border-slate-800"
             }`}
           >
-            <div
-              className={`mb-3 flex h-28 items-center justify-center rounded-xl bg-gradient-to-br ${d.gradient} shadow-inner`}
-            >
-              <div className="rounded-lg border border-white/20 bg-white/10 px-6 py-3 backdrop-blur">
-                <p className="text-xs font-bold text-white/90">MigSmartCard</p>
-                <div className="mt-1 h-1 w-8 rounded bg-white/40" />
-              </div>
+            <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-900">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={d.image}
+                alt={d.name}
+                className="h-full w-full object-cover"
+              />
             </div>
-            <p className="font-semibold">{d.name}</p>
-            <p className="text-xs text-slate-500">{d.desc}</p>
-            <p className="mt-2 text-lg font-bold">${d.price}</p>
+            <div className="p-4">
+              <p className="font-semibold">{d.name}</p>
+              <p className="mt-1 text-xs text-slate-500">{d.desc}</p>
+              <p className="mt-2 text-lg font-bold">${d.price}</p>
+            </div>
           </button>
         ))}
       </div>
@@ -170,7 +159,7 @@ export default function ShopPage() {
             onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
           />
           <Input
-            label="Logo URL (optional)"
+            label="Logo URL (optional — for Custom Print)"
             value={logoUrl}
             onChange={(e) => setLogoUrl(e.target.value)}
             placeholder="https://..."

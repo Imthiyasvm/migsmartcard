@@ -50,12 +50,7 @@ function SocialGlyph({
   const d = paths[network];
   if (!d) return <Globe className={className} />;
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-      aria-hidden
-    >
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
       <path d={d} />
     </svg>
   );
@@ -70,17 +65,17 @@ export function PublicProfileView({ profile, src }: Props) {
     company: "",
     message: "",
   });
-  const [leadStatus, setLeadStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [leadStatus, setLeadStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Track view
-    const device =
-      /Mobi|Android/i.test(navigator.userAgent)
-        ? "mobile"
-        : /Tablet|iPad/i.test(navigator.userAgent)
-          ? "tablet"
-          : "desktop";
+    const device = /Mobi|Android/i.test(navigator.userAgent)
+      ? "mobile"
+      : /Tablet|iPad/i.test(navigator.userAgent)
+        ? "tablet"
+        : "desktop";
 
     fetch("/api/analytics", {
       method: "POST",
@@ -93,8 +88,17 @@ export function PublicProfileView({ profile, src }: Props) {
     }).catch(() => {});
   }, [profile.id, src]);
 
-  const theme = profile.theme;
+  const theme = profile.theme || ({} as DigitalProfile["theme"]);
   const primary = theme.primaryColor || "#1a5ff5";
+  const layout =
+    theme.layout ||
+    (theme.templateId === "glass"
+      ? "glass"
+      : theme.templateId === "premium"
+        ? "premium"
+        : "classic");
+  const isGlass = layout === "glass";
+  const isPremium = layout === "premium";
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -141,9 +145,7 @@ export function PublicProfileView({ profile, src }: Props) {
       if (res.ok) {
         setLeadStatus("success");
         setLeadForm({ name: "", email: "", phone: "", company: "", message: "" });
-      } else {
-        setLeadStatus("error");
-      }
+      } else setLeadStatus("error");
     } catch {
       setLeadStatus("error");
     }
@@ -156,29 +158,77 @@ export function PublicProfileView({ profile, src }: Props) {
         ? "rounded-md"
         : "rounded-xl";
 
+  const panel = cn(
+    "shadow-soft transition",
+    isGlass
+      ? "border border-white/20 bg-white/10 backdrop-blur-xl"
+      : isPremium
+        ? "border border-amber-500/20 bg-zinc-900/80"
+        : "bg-white dark:bg-slate-900",
+    radius
+  );
+
+  const pageBg = isGlass
+    ? {
+        backgroundImage: profile.coverImage
+          ? `linear-gradient(180deg, rgba(15,23,42,0.55), rgba(15,23,42,0.92)), url(${profile.coverImage})`
+          : `linear-gradient(160deg, #0f172a 0%, #312e81 45%, #0ea5e9 120%)`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : isPremium
+      ? {
+          background:
+            "radial-gradient(ellipse at top, #292524 0%, #0a0a0a 55%, #000 100%)",
+        }
+      : { backgroundColor: theme.backgroundColor || "#f8fafc" };
+
+  const textColor = isGlass || isPremium ? "#f8fafc" : theme.textColor || "#0f172a";
+
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: theme.backgroundColor || "#f8fafc" }}
-    >
-      {/* Cover */}
-      <div
-        className="relative h-36 sm:h-48"
-        style={{
-          background: profile.coverImage
-            ? `url(${profile.coverImage}) center/cover`
-            : `linear-gradient(135deg, ${primary} 0%, ${theme.secondaryColor || "#22c55e"} 100%)`,
-        }}
-      >
-        <div className="absolute inset-0 bg-black/10" />
-      </div>
+    <div className="min-h-screen" style={pageBg}>
+      {/* Cover — classic only (glass uses full-page bg) */}
+      {!isGlass && (
+        <div
+          className={cn(
+            "relative h-36 sm:h-48",
+            isPremium && "h-40 sm:h-52"
+          )}
+          style={{
+            background: profile.coverImage
+              ? `url(${profile.coverImage}) center/cover`
+              : isPremium
+                ? `linear-gradient(135deg, #1c1917 0%, #78350f 50%, ${primary} 120%)`
+                : `linear-gradient(135deg, ${primary} 0%, ${theme.secondaryColor || "#22c55e"} 100%)`,
+          }}
+        >
+          <div
+            className={cn(
+              "absolute inset-0",
+              isPremium ? "bg-gradient-to-t from-black/70 to-transparent" : "bg-black/10"
+            )}
+          />
+        </div>
+      )}
+
+      {isGlass && <div className="h-28 sm:h-36" />}
 
       <div className="relative mx-auto max-w-lg px-4 pb-12">
         {/* Avatar */}
-        <div className="-mt-14 flex justify-center sm:-mt-16">
+        <div
+          className={cn(
+            "flex justify-center",
+            isGlass ? "-mt-6" : "-mt-14 sm:-mt-16"
+          )}
+        >
           <div
-            className="rounded-full p-1 shadow-card"
-            style={{ backgroundColor: theme.backgroundColor || "#fff" }}
+            className={cn(
+              "rounded-full p-1 shadow-card",
+              isGlass && "border border-white/30 bg-white/10 p-1.5 backdrop-blur-md",
+              isPremium && "border-2 p-1",
+              !isGlass && !isPremium && "bg-white dark:bg-slate-900"
+            )}
+            style={isPremium ? { borderColor: primary } : undefined}
           >
             <UserAvatar
               name={profile.fullName}
@@ -188,8 +238,7 @@ export function PublicProfileView({ profile, src }: Props) {
           </div>
         </div>
 
-        {/* Identity */}
-        <div className="mt-4 text-center" style={{ color: theme.textColor }}>
+        <div className="mt-4 text-center" style={{ color: textColor }}>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">
             {profile.fullName}
           </h1>
@@ -199,19 +248,27 @@ export function PublicProfileView({ profile, src }: Props) {
             </p>
           )}
           {profile.companyName && (
-            <p className="mt-0.5 text-sm opacity-60">{profile.companyName}</p>
+            <p
+              className="mt-0.5 text-sm font-semibold opacity-90"
+              style={{ color: isPremium || isGlass ? primary : undefined }}
+            >
+              {profile.companyName}
+            </p>
           )}
         </div>
 
-        {/* Action buttons */}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <a href={`/api/vcard?slug=${profile.slug}`}>
             <button
               className={cn(
-                "inline-flex h-11 items-center gap-2 px-5 text-sm font-semibold text-white shadow-soft transition hover:opacity-90",
-                radius
+                "inline-flex h-11 items-center gap-2 px-5 text-sm font-semibold shadow-soft transition hover:opacity-90",
+                radius,
+                isGlass || isPremium ? "text-slate-900" : "text-white"
               )}
-              style={{ backgroundColor: primary }}
+              style={{
+                backgroundColor: isGlass || isPremium ? primary : primary,
+                color: isPremium ? "#0a0a0a" : "#fff",
+              }}
             >
               <Download className="h-4 w-4" /> Save Contact
             </button>
@@ -222,51 +279,59 @@ export function PublicProfileView({ profile, src }: Props) {
               "inline-flex h-11 items-center gap-2 border-2 px-5 text-sm font-semibold transition hover:opacity-80",
               radius
             )}
-            style={{ borderColor: primary, color: primary }}
+            style={{
+              borderColor: primary,
+              color: isGlass || isPremium ? primary : primary,
+              background: isGlass ? "rgba(255,255,255,0.08)" : "transparent",
+            }}
           >
             <MessageCircle className="h-4 w-4" /> Exchange
           </button>
           <button
             onClick={handleShare}
             className={cn(
-              "inline-flex h-11 items-center gap-2 border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm",
-              radius
+              "inline-flex h-11 items-center gap-2 border px-4 text-sm font-semibold shadow-sm",
+              radius,
+              isGlass || isPremium
+                ? "border-white/20 bg-white/10 text-white"
+                : "border-slate-200 bg-white text-slate-700"
             )}
           >
             {copied ? (
-              <Check className="h-4 w-4 text-emerald-500" />
+              <Check className="h-4 w-4 text-emerald-400" />
             ) : (
               <Share2 className="h-4 w-4" />
             )}
           </button>
         </div>
 
-        {/* Bio */}
         {profile.bio && (
-          <div className="mt-6 rounded-2xl bg-white p-5 shadow-soft dark:bg-slate-900">
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <div className={cn("mt-6 p-5", panel)}>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: isGlass || isPremium ? "rgba(248,250,252,0.85)" : undefined }}
+            >
               {profile.bio}
             </p>
           </div>
         )}
 
-        {/* Contact info */}
         <div className="mt-4 space-y-2">
           {profile.phone && (
             <a
               href={`tel:${profile.phone}`}
-              className={cn(
-                "flex items-center gap-3 bg-white p-4 shadow-soft transition hover:shadow-card dark:bg-slate-900",
-                radius
-              )}
+              className={cn("flex items-center gap-3 p-4", panel)}
             >
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${primary}15` }}
+                style={{ backgroundColor: `${primary}22` }}
               >
                 <Phone className="h-4 w-4" style={{ color: primary }} />
               </div>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              <span
+                className="text-sm font-medium"
+                style={{ color: textColor }}
+              >
                 {profile.phone}
               </span>
             </a>
@@ -274,18 +339,15 @@ export function PublicProfileView({ profile, src }: Props) {
           {profile.email && (
             <a
               href={`mailto:${profile.email}`}
-              className={cn(
-                "flex items-center gap-3 bg-white p-4 shadow-soft transition hover:shadow-card dark:bg-slate-900",
-                radius
-              )}
+              className={cn("flex items-center gap-3 p-4", panel)}
             >
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${primary}15` }}
+                style={{ backgroundColor: `${primary}22` }}
               >
                 <Mail className="h-4 w-4" style={{ color: primary }} />
               </div>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              <span className="text-sm font-medium" style={{ color: textColor }}>
                 {profile.email}
               </span>
             </a>
@@ -293,49 +355,45 @@ export function PublicProfileView({ profile, src }: Props) {
           {profile.website && (
             <button
               onClick={() => handleLinkClick("Website", profile.website!)}
-              className={cn(
-                "flex w-full items-center gap-3 bg-white p-4 shadow-soft transition hover:shadow-card dark:bg-slate-900",
-                radius
-              )}
+              className={cn("flex w-full items-center gap-3 p-4", panel)}
             >
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${primary}15` }}
+                style={{ backgroundColor: `${primary}22` }}
               >
                 <Globe className="h-4 w-4" style={{ color: primary }} />
               </div>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              <span className="text-sm font-medium" style={{ color: textColor }}>
                 {profile.website.replace(/^https?:\/\//, "")}
               </span>
             </button>
           )}
           {profile.address && (
             <a
-              href={profile.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(profile.address)}`}
+              href={
+                profile.mapsUrl ||
+                `https://maps.google.com/?q=${encodeURIComponent(profile.address)}`
+              }
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(
-                "flex items-center gap-3 bg-white p-4 shadow-soft transition hover:shadow-card dark:bg-slate-900",
-                radius
-              )}
+              className={cn("flex items-center gap-3 p-4", panel)}
             >
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${primary}15` }}
+                style={{ backgroundColor: `${primary}22` }}
               >
                 <MapPin className="h-4 w-4" style={{ color: primary }} />
               </div>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              <span className="text-sm font-medium" style={{ color: textColor }}>
                 {profile.address}
               </span>
             </a>
           )}
         </div>
 
-        {/* Social links */}
-        {Object.keys(profile.social).length > 0 && (
+        {Object.keys(profile.social || {}).length > 0 && (
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            {Object.entries(profile.social).map(([key, url]) => {
+            {Object.entries(profile.social || {}).map(([key, url]) => {
               if (!url) return null;
               if (key === "whatsapp") {
                 const phone = url.replace(/\D/g, "");
@@ -345,9 +403,6 @@ export function PublicProfileView({ profile, src }: Props) {
                     href={`https://wa.me/${phone}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() =>
-                      handleLinkClick("WhatsApp", `https://wa.me/${phone}`)
-                    }
                     className="flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-soft transition hover:scale-105"
                   >
                     <MessageCircle className="h-5 w-5" />
@@ -369,7 +424,12 @@ export function PublicProfileView({ profile, src }: Props) {
                 <button
                   key={key}
                   onClick={() => handleLinkClick(key, url)}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700 shadow-soft transition hover:scale-105 dark:bg-slate-800 dark:text-slate-200"
+                  className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-full shadow-soft transition hover:scale-105",
+                    isGlass || isPremium
+                      ? "border border-white/20 bg-white/10 text-white"
+                      : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  )}
                 >
                   <SocialGlyph network={key} className="h-5 w-5" />
                 </button>
@@ -378,42 +438,45 @@ export function PublicProfileView({ profile, src }: Props) {
           </div>
         )}
 
-        {/* Custom links */}
-        {profile.customLinks.length > 0 && (
+        {(profile.customLinks || []).length > 0 && (
           <div className="mt-6 space-y-2">
             {profile.customLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => handleLinkClick(link.title, link.url)}
                 className={cn(
-                  "flex w-full items-center justify-between bg-white p-4 shadow-soft transition hover:shadow-card dark:bg-slate-900",
-                  radius
+                  "flex w-full items-center justify-between p-4",
+                  panel
                 )}
               >
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: textColor }}
+                >
                   {link.title}
                 </span>
-                <ExternalLink className="h-4 w-4 text-slate-400" />
+                <ExternalLink
+                  className="h-4 w-4 opacity-60"
+                  style={{ color: textColor }}
+                />
               </button>
             ))}
           </div>
         )}
 
-        {/* Branding */}
-        {theme.showBranding && (
+        {theme.showBranding !== false && (
           <div className="mt-10 text-center">
             <a
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-slate-400 transition hover:text-brand-600"
+              className="inline-flex items-center gap-1.5 text-xs opacity-50 transition hover:opacity-100"
+              style={{ color: textColor }}
             >
-              Powered by{" "}
-              <span className="font-semibold">MigSmartCard</span>
+              Powered by <span className="font-semibold">MigSmartCard</span>
             </a>
           </div>
         )}
       </div>
 
-      {/* Exchange modal */}
       {showExchange && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
           <div className="w-full max-w-md animate-slide-up rounded-2xl bg-white p-6 shadow-card dark:bg-slate-900">
@@ -429,16 +492,12 @@ export function PublicProfileView({ profile, src }: Props) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-
             {leadStatus === "success" ? (
               <div className="py-8 text-center">
                 <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
                   <Check className="h-7 w-7 text-emerald-600" />
                 </div>
                 <p className="font-semibold">Contact shared!</p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {profile.fullName} will receive your details.
-                </p>
                 <Button
                   className="mt-4"
                   onClick={() => {
@@ -492,9 +551,7 @@ export function PublicProfileView({ profile, src }: Props) {
                   rows={2}
                 />
                 {leadStatus === "error" && (
-                  <p className="text-sm text-red-500">
-                    Something went wrong. Please try again.
-                  </p>
+                  <p className="text-sm text-red-500">Something went wrong.</p>
                 )}
                 <Button
                   type="submit"

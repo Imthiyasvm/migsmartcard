@@ -295,6 +295,8 @@ export const DEFAULT_THEME: ProfileTheme = {
   buttonStyle: "rounded",
   fontStyle: "modern",
   showBranding: true,
+  templateId: "default",
+  layout: "classic",
 };
 
 function buildSeedData(): Omit<Store, "seeded"> {

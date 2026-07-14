@@ -29,6 +29,9 @@ export interface ProfileTheme {
   buttonStyle: "rounded" | "pill" | "square";
   fontStyle: "modern" | "classic" | "minimal";
   showBranding: boolean;
+  /** Visual template: default | glass | premium */
+  templateId?: "default" | "glass" | "premium";
+  layout?: "classic" | "glass" | "premium";
 }
 
 export interface DigitalProfile {
