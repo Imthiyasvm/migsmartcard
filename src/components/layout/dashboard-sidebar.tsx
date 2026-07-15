@@ -52,6 +52,7 @@ const adminNav = [
   { href: "/admin/nfc", label: "NFC Cards", icon: Nfc },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/analytics", label: "Platform Stats", icon: BarChart3 },
+  { href: "/admin/settings", label: "Admin Settings", icon: Settings },
 ];
 
 export function DashboardSidebar() {

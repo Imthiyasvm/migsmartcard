@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { AccountSettingsForm } from "@/components/account/account-settings-form";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -50,6 +51,9 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Change email & reset password */}
+      <AccountSettingsForm />
 
       <Card>
         <CardHeader>

@@ -49,6 +49,7 @@ export const authOptions: NextAuthOptions = {
       }
       if (trigger === "update" && session) {
         token.name = session.name ?? token.name;
+        token.email = session.email ?? token.email;
         token.plan = session.plan ?? token.plan;
         token.image = session.image ?? token.image;
       }
@@ -60,6 +61,7 @@ export const authOptions: NextAuthOptions = {
           token.role = dbUser.role;
           token.plan = dbUser.plan;
           token.name = dbUser.name;
+          token.email = dbUser.email;
           token.image = dbUser.avatar || null;
         }
       }
