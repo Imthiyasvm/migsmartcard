@@ -21,6 +21,7 @@ import {
   Menu,
   Eye,
   IdCard,
+  Wallet,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserAvatar } from "@/components/ui/avatar";
@@ -51,6 +52,7 @@ const adminNav = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/nfc", label: "NFC Cards", icon: Nfc },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/payments", label: "Payments", icon: Wallet },
   { href: "/admin/analytics", label: "Platform Stats", icon: BarChart3 },
   { href: "/admin/settings", label: "Admin Settings", icon: Settings },
 ];

@@ -82,6 +82,35 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ orders: db.orders.getAll() });
   }
 
+  if (resource === "payments") {
+    const payments = db.payments
+      .getAll()
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .map((p) => ({
+        ...p,
+        userEmail: db.users.getById(p.userId)?.email || "unknown",
+        order: p.orderId ? db.orders.getById(p.orderId) || null : null,
+      }));
+
+    const completed = payments.filter((p) => p.status === "completed");
+    return NextResponse.json({
+      payments,
+      summary: {
+        // Revenue counts completed transactions only, in AED
+        revenueAed:
+          completed.reduce((sum, p) => sum + p.amountFils, 0) / 100,
+        completed: completed.length,
+        pending: payments.filter((p) => p.status === "pending").length,
+        failed:
+          payments.filter((p) => p.status === "failed").length +
+          payments.filter((p) => p.status === "cancelled").length,
+      },
+    });
+  }
+
   return NextResponse.json({ error: "Unknown resource" }, { status: 400 });
 }
 

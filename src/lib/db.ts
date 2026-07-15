@@ -870,6 +870,8 @@ export const db = {
 
   orders: {
     getAll: (): CardOrder[] => readCollection("orders"),
+    getById: (id: string): CardOrder | undefined =>
+      db.orders.getAll().find((o) => o.id === id),
     getByUserId: (userId: string): CardOrder[] =>
       db.orders.getAll().filter((o) => o.userId === userId),
     create: (order: CardOrder): CardOrder => {
