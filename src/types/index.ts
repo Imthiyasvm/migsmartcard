@@ -184,3 +184,22 @@ export interface SessionUser {
   plan: PlanId;
   avatar?: string;
 }
+
+export type PaymentStatus = "pending" | "completed" | "failed" | "cancelled";
+
+export interface Payment {
+  id: string;
+  userId: string;
+  planId: PlanId;
+  billingCycle: "monthly" | "yearly";
+  /** Amount in fils (1 AED = 100 fils) */
+  amountFils: number;
+  currency: string;
+  status: PaymentStatus;
+  /** Ziina payment intent id */
+  intentId?: string;
+  /** true in Ziina test mode, or when simulated (no API key configured) */
+  test: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
