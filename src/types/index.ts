@@ -147,6 +147,8 @@ export interface CardOrder {
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   shippingAddress: string;
   totalAmount: number;
+  /** ISO currency of totalAmount — "AED" for Ziina-paid orders, "USD" legacy */
+  currency?: string;
   trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
@@ -183,4 +185,31 @@ export interface SessionUser {
   role: UserRole;
   plan: PlanId;
   avatar?: string;
+}
+
+export type PaymentStatus = "pending" | "completed" | "failed" | "cancelled";
+export type PaymentType = "subscription" | "order";
+
+/** A single transaction — either a subscription upgrade or a card order. */
+export interface Payment {
+  id: string;
+  userId: string;
+  type: PaymentType;
+  /** Human-readable line shown in Admin → Payments */
+  description: string;
+  /** Amount in fils (1 AED = 100 fils) */
+  amountFils: number;
+  currency: string;
+  status: PaymentStatus;
+  /** Ziina payment intent id */
+  intentId?: string;
+  /** Subscription payments */
+  planId?: PlanId;
+  billingCycle?: "monthly" | "yearly";
+  /** NFC card order payments */
+  orderId?: string;
+  /** true in Ziina test mode, or when simulated (no API key configured) */
+  test: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

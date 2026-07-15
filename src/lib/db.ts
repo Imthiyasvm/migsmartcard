@@ -10,6 +10,7 @@ import {
   CardOrder,
   Company,
   ProfileTheme,
+  Payment,
 } from "@/types";
 import {
   loadStoreFromRedis,
@@ -44,6 +45,7 @@ type Store = {
   analytics: AnalyticsEvent[];
   nfcCards: NfcCard[];
   orders: CardOrder[];
+  payments: Payment[];
   seeded: boolean;
 };
 
@@ -66,6 +68,7 @@ function getMemoryStore(): Store {
       analytics: [],
       nfcCards: [],
       orders: [],
+      payments: [],
       seeded: false,
     };
   }
@@ -80,6 +83,7 @@ const FILE_MAP: Record<keyof Omit<Store, "seeded">, string> = {
   analytics: "analytics.json",
   nfcCards: "nfc-cards.json",
   orders: "orders.json",
+  payments: "payments.json",
 };
 
 function ensureDataDir() {
@@ -165,6 +169,7 @@ export async function ensureDbReady(): Promise<void> {
         store.analytics = (remote.analytics as Store["analytics"]) || [];
         store.nfcCards = (remote.nfcCards as Store["nfcCards"]) || [];
         store.orders = (remote.orders as Store["orders"]) || [];
+        store.payments = (remote.payments as Store["payments"]) || [];
         store.seeded = true;
       } else {
         ensureSeeded();
@@ -657,6 +662,7 @@ function buildSeedData(): Omit<Store, "seeded"> {
     analytics: events,
     nfcCards,
     orders,
+    payments: [],
   };
 }
 
@@ -864,6 +870,8 @@ export const db = {
 
   orders: {
     getAll: (): CardOrder[] => readCollection("orders"),
+    getById: (id: string): CardOrder | undefined =>
+      db.orders.getAll().find((o) => o.id === id),
     getByUserId: (userId: string): CardOrder[] =>
       db.orders.getAll().filter((o) => o.userId === userId),
     create: (order: CardOrder): CardOrder => {
@@ -883,6 +891,40 @@ export const db = {
       };
       writeCollection("orders", orders);
       return orders[idx];
+    },
+  },
+
+  payments: {
+    getAll: (): Payment[] => readCollection("payments"),
+    getById: (id: string): Payment | undefined =>
+      db.payments.getAll().find((p) => p.id === id),
+    getByUserId: (userId: string): Payment[] =>
+      db.payments
+        .getAll()
+        .filter((p) => p.userId === userId)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
+    getByIntentId: (intentId: string): Payment | undefined =>
+      db.payments.getAll().find((p) => p.intentId === intentId),
+    create: (payment: Payment): Payment => {
+      const payments = db.payments.getAll();
+      payments.push(payment);
+      writeCollection("payments", payments);
+      return payment;
+    },
+    update: (id: string, data: Partial<Payment>): Payment | null => {
+      const payments = db.payments.getAll();
+      const idx = payments.findIndex((p) => p.id === id);
+      if (idx === -1) return null;
+      payments[idx] = {
+        ...payments[idx],
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      writeCollection("payments", payments);
+      return payments[idx];
     },
   },
 

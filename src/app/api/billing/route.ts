@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { db, ensureDbReady } from "@/lib/db";
+import { db, ensureDbReady, persistDb } from "@/lib/db";
 import { PLANS, getPlan } from "@/lib/plans";
-import { PlanId } from "@/types";
+import { createId } from "@/lib/id";
+import { absoluteUrl } from "@/lib/utils";
+import { createPaymentIntent, isZiinaConfigured } from "@/lib/ziina";
+import {
+  MIN_CHARGE_FILS,
+  grantSubscription,
+  planPriceUsd,
+  publicPaymentConfig,
+  usdToFils,
+} from "@/lib/billing";
+import { Payment, PlanId } from "@/types";
 
 export async function GET() {
   await ensureDbReady();
@@ -22,6 +32,7 @@ export async function GET() {
     plans: PLANS,
     subscriptionEndsAt: user.subscriptionEndsAt,
     status: user.status,
+    payment: publicPaymentConfig(),
   });
 }
 
@@ -42,44 +53,88 @@ export async function POST(req: NextRequest) {
   if (!plan) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
+  const cycle: "monthly" | "yearly" =
+    billingCycle === "yearly" ? "yearly" : "monthly";
+  const priceUsd = planPriceUsd(planId, cycle);
 
-  // Simulated payment success (Stripe/Razorpay/PayPal would go here)
-  const endsAt = new Date();
-  if (billingCycle === "yearly") {
-    endsAt.setFullYear(endsAt.getFullYear() + 1);
-  } else {
-    endsAt.setMonth(endsAt.getMonth() + 1);
-  }
+  // Free plan / simulated mode: grant directly without a real charge
+  // (keeps development & demos working with no Ziina key configured).
+  if (priceUsd <= 0 || !isZiinaConfigured()) {
+    const user = grantSubscription(session.user.id, planId, cycle);
+    await persistDb();
 
-  const user = db.users.update(session.user.id, {
-    plan: planId,
-    subscriptionEndsAt: endsAt.toISOString(),
-  });
-
-  // Update profile branding based on plan
-  const profile = db.profiles.getByUserId(session.user.id);
-  if (profile) {
-    db.profiles.update(profile.id, {
-      theme: {
-        ...profile.theme,
-        showBranding: !plan.limits.removeBranding,
-      },
+    return NextResponse.json({
+      success: true,
+      message: `Successfully upgraded to ${plan.name}`,
+      plan,
+      user: user
+        ? {
+            id: user.id,
+            plan: user.plan,
+            subscriptionEndsAt: user.subscriptionEndsAt,
+          }
+        : null,
+      checkoutUrl: null,
+      simulated: true,
     });
   }
 
-  return NextResponse.json({
-    success: true,
-    message: `Successfully upgraded to ${plan.name}`,
-    plan,
-    user: user
-      ? {
-          id: user.id,
-          plan: user.plan,
-          subscriptionEndsAt: user.subscriptionEndsAt,
-        }
-      : null,
-    // In production: return Stripe checkout URL
-    checkoutUrl: null,
-    simulated: true,
-  });
+  // Real payment: create a Ziina Payment Intent and send the user to the
+  // hosted checkout (card / Apple Pay / Google Pay).
+  try {
+    const amountFils = Math.max(usdToFils(priceUsd), MIN_CHARGE_FILS);
+    const confirmUrl = absoluteUrl("/api/billing/confirm");
+    const intent = await createPaymentIntent({
+      amountFils,
+      message: `MigSmartCard ${plan.name} plan (${cycle})`,
+      successUrl: confirmUrl,
+      cancelUrl: confirmUrl,
+      failureUrl: confirmUrl,
+    });
+
+    if (!intent.id || !intent.redirect_url) {
+      return NextResponse.json(
+        { error: "Payment gateway returned an incomplete response" },
+        { status: 502 }
+      );
+    }
+
+    const now = new Date().toISOString();
+    const payment: Payment = {
+      id: createId("pay"),
+      userId: session.user.id,
+      type: "subscription",
+      description: `${plan.name} plan (${cycle})`,
+      planId,
+      billingCycle: cycle,
+      amountFils,
+      currency: "AED",
+      status: "pending",
+      intentId: intent.id,
+      test: intent.test ?? true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.payments.create(payment);
+    await persistDb();
+
+    return NextResponse.json({
+      success: true,
+      simulated: false,
+      plan,
+      redirectUrl: intent.redirect_url,
+      payment: {
+        id: payment.id,
+        intentId: payment.intentId,
+        amountFils: payment.amountFils,
+        currency: payment.currency,
+      },
+    });
+  } catch (e) {
+    console.error("Ziina payment intent creation failed", e);
+    return NextResponse.json(
+      { error: "Payment gateway unavailable. Please try again later." },
+      { status: 502 }
+    );
+  }
 }
