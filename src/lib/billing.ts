@@ -105,10 +105,10 @@ export interface FulfillResult {
 }
 
 /**
- * Idempotent subscription fulfillment shared by the webhook and the
- * return-URL confirm route. The payment intent is always re-fetched from
- * Ziina so callers can never trust a client-supplied status; re-processing
- * a completed payment is a no-op.
+ * Idempotent fulfillment shared by the webhook and the return-URL confirm
+ * route — one dispatcher covering subscriptions AND card orders. The payment
+ * intent is always re-fetched from Ziina so callers can never trust a
+ * client-supplied status; re-processing a completed payment is a no-op.
  */
 export async function fulfillPaymentIntent(
   intentId: string
@@ -138,9 +138,19 @@ export async function fulfillPaymentIntent(
   const status = ziinaStatusToPaymentStatus(zStatus);
 
   let fulfilled = false;
-  if (status === "completed" && payment.planId && payment.billingCycle) {
-    grantSubscription(payment.userId, payment.planId, payment.billingCycle);
-    fulfilled = true;
+  if (status === "completed") {
+    if (payment.type === "order" && payment.orderId) {
+      // Paid — move the order into fulfillment
+      db.orders.update(payment.orderId, { status: "processing" });
+      fulfilled = true;
+    } else if (
+      payment.type === "subscription" &&
+      payment.planId &&
+      payment.billingCycle
+    ) {
+      grantSubscription(payment.userId, payment.planId, payment.billingCycle);
+      fulfilled = true;
+    }
   }
 
   db.payments.update(payment.id, { status });

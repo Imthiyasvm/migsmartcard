@@ -103,6 +103,8 @@ export async function POST(req: NextRequest) {
     const payment: Payment = {
       id: createId("pay"),
       userId: session.user.id,
+      type: "subscription",
+      description: `${plan.name} plan (${cycle})`,
       planId,
       billingCycle: cycle,
       amountFils,

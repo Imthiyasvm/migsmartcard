@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ShoppingBag, Package } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ShoppingBag, Package, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,49 +14,55 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
+import { CARD_DESIGNS } from "@/lib/cards";
 import { CardOrder } from "@/types";
 
-const DESIGNS = [
-  {
-    id: "premium-metal",
-    name: "Premium Metal Card",
-    price: 59,
-    desc: "Premium metal NFC card with engraved MigSmartCard branding",
-    image: "/shop/premium-metal.webp",
-  },
-  {
-    id: "wood-grain",
-    name: "Premium Wood Grain NFC Card",
-    price: 45,
-    desc: "Premium wood grain NFC card with engraved MigSmartCard branding",
-    image: "/shop/wood-grain.webp",
-  },
-  {
-    id: "custom-print",
-    name: "Premium Custom Printed NFC Card",
-    price: 49,
-    desc: "Premium custom printed NFC card with engraved MigSmartCard branding",
-    image: "/shop/custom-print.webp",
-  },
-];
+interface PaymentConfig {
+  configured: boolean;
+  testMode: boolean;
+  currency: string;
+  usdToAed: number;
+}
 
-export default function ShopPage() {
+const RETURN_BANNERS: Record<string, { text: string; tone: "success" | "info" | "error" }> = {
+  success: { text: "Payment completed — your order is being processed.", tone: "success" },
+  pending: { text: "Payment is processing. Your order will update once Ziina confirms it.", tone: "info" },
+  failed: { text: "Payment failed. You have not been charged — your order is still pending.", tone: "error" },
+  cancelled: { text: "Payment was cancelled. You have not been charged — your order is still pending.", tone: "error" },
+};
+
+function ShopPageInner() {
+  const searchParams = useSearchParams();
   const [orders, setOrders] = useState<CardOrder[]>([]);
-  const [selected, setSelected] = useState(DESIGNS[0].id);
+  const [selected, setSelected] = useState(CARD_DESIGNS[0].id);
   const [qty, setQty] = useState(1);
   const [address, setAddress] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [payment, setPayment] = useState<PaymentConfig | null>(null);
 
   useEffect(() => {
     fetch("/api/orders")
       .then((r) => r.json())
       .then((d) => setOrders(d.orders || []));
-  }, []);
+    fetch("/api/billing")
+      .then((r) => r.json())
+      .then((d) => setPayment(d.payment || null))
+      .catch(() => {});
 
-  const design = DESIGNS.find((d) => d.id === selected)!;
-  const total = design.price * qty;
+    // Returning from Ziina checkout — refresh order list to pick up status
+    if (searchParams.get("payment")) {
+      fetch("/api/orders")
+        .then((r) => r.json())
+        .then((d) => setOrders(d.orders || []));
+    }
+  }, [searchParams]);
+
+  const design = CARD_DESIGNS.find((d) => d.id === selected)!;
+  const aedPrice = (usd: number) =>
+    payment ? Math.round(usd * payment.usdToAed) : null;
+  const totalAed = aedPrice(design.priceUsd * qty);
 
   const placeOrder = async () => {
     if (!address.trim()) {
@@ -77,6 +84,11 @@ export default function ShopPage() {
       });
       const data = await res.json();
       if (res.ok) {
+        if (data.redirectUrl) {
+          // Real payment — hand off to Ziina's hosted checkout
+          window.location.assign(data.redirectUrl);
+          return;
+        }
         setOrders((prev) => [data.order, ...prev]);
         setMessage("Order placed successfully! We'll ship soon.");
         setAddress("");
@@ -96,14 +108,43 @@ export default function ShopPage() {
     return "warning" as const;
   };
 
+  const orderTotal = (o: CardOrder) =>
+    o.currency === "AED" ? `AED ${o.totalAmount.toFixed(2)}` : `$${o.totalAmount}`;
+
+  const returnStatus = searchParams.get("payment") || "";
+  const banner = RETURN_BANNERS[returnStatus];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">Order NFC Cards</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Premium physical MigSmartCards with embedded NFC
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Order NFC Cards</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Premium physical MigSmartCards with embedded NFC
+          </p>
+        </div>
+        {payment?.configured && (
+          <p className="flex items-center gap-1 text-xs text-slate-400">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Secure checkout by Ziina (AED)
+            {payment.testMode && <Badge variant="warning" className="ml-1">Test mode</Badge>}
+          </p>
+        )}
       </div>
+
+      {banner && (
+        <div
+          className={
+            banner.tone === "success"
+              ? "rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950/30"
+              : banner.tone === "info"
+                ? "rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 dark:bg-brand-950/30"
+                : "rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30"
+          }
+        >
+          {banner.text}
+        </div>
+      )}
 
       {message && (
         <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 dark:bg-brand-950/30">
@@ -112,32 +153,42 @@ export default function ShopPage() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {DESIGNS.map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            onClick={() => setSelected(d.id)}
-            className={`overflow-hidden rounded-2xl border-2 text-left transition ${
-              selected === d.id
-                ? "border-brand-500 shadow-glow"
-                : "border-slate-200 hover:border-slate-300 dark:border-slate-800"
-            }`}
-          >
-            <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-900">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={d.image}
-                alt={d.name}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="p-4">
-              <p className="font-semibold">{d.name}</p>
-              <p className="mt-1 text-xs text-slate-500">{d.desc}</p>
-              <p className="mt-2 text-lg font-bold">${d.price}</p>
-            </div>
-          </button>
-        ))}
+        {CARD_DESIGNS.map((d) => {
+          const priceAed = aedPrice(d.priceUsd);
+          return (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => setSelected(d.id)}
+              className={`overflow-hidden rounded-2xl border-2 text-left transition ${
+                selected === d.id
+                  ? "border-brand-500 shadow-glow"
+                  : "border-slate-200 hover:border-slate-300 dark:border-slate-800"
+              }`}
+            >
+              <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-900">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={d.image}
+                  alt={d.name}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="p-4">
+                <p className="font-semibold">{d.name}</p>
+                <p className="mt-1 text-xs text-slate-500">{d.description}</p>
+                <p className="mt-2 text-lg font-bold">
+                  {priceAed !== null ? `AED ${priceAed}` : `$${d.priceUsd}`}
+                  {priceAed !== null && (
+                    <span className="ml-1 text-xs font-normal text-slate-400">
+                      (${d.priceUsd})
+                    </span>
+                  )}
+                </p>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       <Card>
@@ -146,7 +197,10 @@ export default function ShopPage() {
             <ShoppingBag className="h-5 w-5" /> Checkout
           </CardTitle>
           <CardDescription>
-            {design.name} · ${design.price} each
+            {design.name} ·{" "}
+            {aedPrice(design.priceUsd) !== null
+              ? `AED ${aedPrice(design.priceUsd)} each`
+              : `$${design.priceUsd} each`}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -176,7 +230,9 @@ export default function ShopPage() {
           <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4 dark:bg-slate-800 sm:col-span-2">
             <div>
               <p className="text-sm text-slate-500">Total</p>
-              <p className="text-2xl font-bold">${total}</p>
+              <p className="text-2xl font-bold">
+                {totalAed !== null ? `AED ${totalAed}` : `$${design.priceUsd * qty}`}
+              </p>
             </div>
             <Button size="lg" onClick={placeOrder} loading={loading}>
               Place Order
@@ -203,7 +259,7 @@ export default function ShopPage() {
                     {o.design.replace(/-/g, " ")} × {o.quantity}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {formatDateTime(o.createdAt)} · ${o.totalAmount}
+                    {formatDateTime(o.createdAt)} · {orderTotal(o)}
                   </p>
                   {o.trackingNumber && (
                     <p className="text-xs text-brand-600">
@@ -220,5 +276,19 @@ export default function ShopPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-64 items-center justify-center text-slate-400">
+          Loading shop...
+        </div>
+      }
+    >
+      <ShopPageInner />
+    </Suspense>
   );
 }

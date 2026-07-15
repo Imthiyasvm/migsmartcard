@@ -24,6 +24,11 @@ import { CardOrder } from "@/types";
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<CardOrder[]>([]);
 
+  const formatTotal = (o: CardOrder) =>
+    o.currency === "AED"
+      ? `AED ${o.totalAmount.toFixed(2)}`
+      : `$${o.totalAmount}`;
+
   const load = () => {
     fetch("/api/admin?resource=orders")
       .then((r) => r.json())
@@ -82,7 +87,7 @@ export default function AdminOrdersPage() {
                     {o.design.replace(/-/g, " ")} × {o.quantity}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {formatDateTime(o.createdAt)} · ${o.totalAmount}
+                    {formatDateTime(o.createdAt)} · {formatTotal(o)}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     Ship to: {o.shippingAddress}
