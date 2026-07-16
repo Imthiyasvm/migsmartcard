@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { DigitalProfile } from "@/types";
 import { getPlan } from "@/lib/plans";
 import { buildSharePath } from "@/lib/share-token";
-import { cn, getInitials } from "@/lib/utils";
+import { cn, getInitials, displayWebsiteUrl } from "@/lib/utils";
 
 type Orientation = "landscape" | "portrait";
 type StyleId = "white" | "black" | "custom";
@@ -282,9 +282,7 @@ export default function BusinessCardDesignerPage() {
         }
       };
 
-      const website = (profile.website || "")
-        .replace(/^https?:\/\//, "")
-        .replace(/\/$/, "");
+      const website = displayWebsiteUrl(profile.website);
       const namePx = NAME_PX[nameSize][isLandscape ? "land" : "port"];
       const weight =
         fontWeight === "600" ? "600" : fontWeight === "700" ? "700" : "800";
@@ -322,7 +320,7 @@ export default function BusinessCardDesignerPage() {
           ty += 30;
         }
         if (showPhone && profile.phone) {
-          ctx.fillText(profile.phone, tx, ty, 560);
+          ctx.fillText(profile.phone.trim(), tx, ty, 560);
         }
         drawQr(W - 310, H / 2 - qrSize / 2, qrSize);
         ctx.fillStyle = style.muted;

@@ -95,6 +95,16 @@ export default function ProfileEditorPage() {
     });
   };
 
+  /** Normalize URL on blur — add https:// if no protocol present */
+  const normalizeUrlOnBlur = (currentUrl: string): string => {
+    if (!currentUrl || !currentUrl.trim()) return currentUrl;
+    const trimmed = currentUrl.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  };
+
   const updateTheme = (key: keyof ProfileTheme, value: string | boolean) => {
     if (!profile) return;
     setProfile({
@@ -912,6 +922,9 @@ export default function ProfileEditorPage() {
                 label="Website"
                 value={profile.website || ""}
                 onChange={(e) => update("website", e.target.value)}
+                onBlur={(e) => update("website", normalizeUrlOnBlur(e.target.value))}
+                placeholder="example.com or https://example.com"
+                hint="Auto-normalized: protocol added, trailing slashes removed"
               />
               <Input
                 label="Address"
@@ -933,6 +946,9 @@ export default function ProfileEditorPage() {
                   label="Google Maps URL"
                   value={profile.mapsUrl || ""}
                   onChange={(e) => update("mapsUrl", e.target.value)}
+                  onBlur={(e) => update("mapsUrl", normalizeUrlOnBlur(e.target.value))}
+                  placeholder="https://maps.google.com/..."
+                  hint="Optional: auto-normalized with https:// if needed"
                 />
               </div>
             </CardContent>
@@ -945,23 +961,29 @@ export default function ProfileEditorPage() {
               <CardTitle>Social Media</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
-              {(
-                [
-                  ["linkedin", "LinkedIn"],
-                  ["instagram", "Instagram"],
-                  ["twitter", "Twitter / X"],
-                  ["facebook", "Facebook"],
-                  ["youtube", "YouTube"],
-                  ["github", "GitHub"],
-                  ["whatsapp", "WhatsApp (phone)"],
-                  ["calendly", "Calendly"],
-                ] as const
-              ).map(([key, label]) => (
+              {([
+                  ["linkedin", "LinkedIn", "linkedin.com/in/username"],
+                  ["instagram", "Instagram", "instagram.com/username"],
+                  ["twitter", "Twitter / X", "x.com/username"],
+                  ["facebook", "Facebook", "facebook.com/page"],
+                  ["youtube", "YouTube", "youtube.com/@channel"],
+                  ["github", "GitHub", "github.com/username"],
+                  ["whatsapp", "WhatsApp (phone)", "+1234567890"],
+                  ["calendly", "Calendly", "calendly.com/username"],
+                ] as const).map(([key, label, placeholder]) => (
                 <Input
                   key={key}
                   label={label}
                   value={profile.social[key] || ""}
                   onChange={(e) => updateSocial(key, e.target.value)}
+                  onBlur={(e) => {
+                    const val = e.target.value.trim();
+                    if (val && key !== "whatsapp") {
+                      updateSocial(key, normalizeUrlOnBlur(val));
+                    }
+                  }}
+                  placeholder={placeholder}
+                  hint="URL auto-normalized on save"
                 />
               ))}
             </CardContent>
@@ -998,6 +1020,8 @@ export default function ProfileEditorPage() {
                     label="URL"
                     value={link.url}
                     onChange={(e) => updateLink(link.id, "url", e.target.value)}
+                    onBlur={(e) => updateLink(link.id, "url", normalizeUrlOnBlur(e.target.value))}
+                    placeholder="https://..."
                   />
                   <Button
                     variant="ghost"

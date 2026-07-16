@@ -11,7 +11,7 @@ import {
   isRedisEnabled,
   persistDb,
 } from "@/lib/db";
-import { slugify } from "@/lib/utils";
+import { slugify, normalizeWebsiteUrl } from "@/lib/utils";
 import { createId } from "@/lib/id";
 import { getMaxCards, getPlan } from "@/lib/plans";
 import { DigitalProfile } from "@/types";
@@ -239,6 +239,40 @@ export async function PUT(req: NextRequest) {
       (next as any)[key] = body[key];
     }
   }
+  
+  // Normalize website URL to ensure consistent storage
+  if (body.website !== undefined) {
+    next.website = normalizeWebsiteUrl(body.website);
+  }
+  
+  // Normalize social URLs to ensure consistent storage
+  if (body.social && typeof body.social === "object") {
+    const normalized: Record<string, string> = {};
+    for (const [key, value] of Object.entries(body.social as Record<string, string>)) {
+      if (typeof value === "string" && value.trim()) {
+        if (key === "whatsapp") {
+          normalized[key] = value.trim(); // Phone numbers don't get URL normalization
+        } else {
+          normalized[key] = normalizeWebsiteUrl(value);
+        }
+      }
+    }
+    next.social = { ...next.social, ...normalized } as typeof next.social;
+  }
+  
+  // Normalize custom link URLs
+  if (body.customLinks && Array.isArray(body.customLinks)) {
+    next.customLinks = body.customLinks.map((link: { id: string; title: string; url: string; icon?: string }) => ({
+      ...link,
+      url: link.url ? normalizeWebsiteUrl(link.url) : link.url,
+    }));
+  }
+  
+  // Normalize maps URL
+  if (body.mapsUrl !== undefined) {
+    next.mapsUrl = normalizeWebsiteUrl(body.mapsUrl);
+  }
+  
   if (body.forcePublic === true) next.isPublic = true;
   if (next.isPublic === undefined || next.isPublic === null) {
     next.isPublic = true;
