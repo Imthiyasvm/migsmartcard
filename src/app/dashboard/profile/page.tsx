@@ -15,7 +15,6 @@ import {
   Crown,
   Copy,
   Check,
-  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +34,9 @@ import { createId } from "@/lib/id";
 import { PublicProfileView } from "@/components/public-profile-view";
 import { ImageUpload } from "@/components/image-upload";
 import { CARD_TEMPLATES, canUseTemplate } from "@/lib/templates";
+import { canUseFeature } from "@/lib/plans";
+import { COUNTRIES_DATA, getCitiesForCountry } from "@/lib/countries-cities";
+import { getContrastColor } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 
 export default function ProfileEditorPage() {
@@ -50,7 +52,6 @@ export default function ProfileEditorPage() {
   const [message, setMessage] = useState("");
   const [showLivePreview, setShowLivePreview] = useState(false);
   const [origin, setOrigin] = useState("");
-  const [redisOn, setRedisOn] = useState<boolean | null>(null);
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -62,7 +63,6 @@ export default function ProfileEditorPage() {
     setProfiles(list);
     setMaxCards(d.maxCards ?? 1);
     setPlanName(d.planName || d.plan || "Free");
-    if (typeof d.redisEnabled === "boolean") setRedisOn(d.redisEnabled);
     const selected =
       (preferId && list.find((p) => p.id === preferId)) ||
       list.find((p) => p.isPrimary) ||
@@ -107,9 +107,17 @@ export default function ProfileEditorPage() {
 
   const updateTheme = (key: keyof ProfileTheme, value: string | boolean) => {
     if (!profile) return;
+    const nextTheme = { ...profile.theme, [key]: value };
+    if (key === "primaryColor" || key === "backgroundColor") {
+      // Auto-detect font text color depend on theme primary/background color
+      const autoTextColor = getContrastColor(
+        key === "primaryColor" ? (value as string) : nextTheme.primaryColor
+      );
+      nextTheme.textColor = autoTextColor;
+    }
     setProfile({
       ...profile,
-      theme: { ...profile.theme, [key]: value },
+      theme: nextTheme,
     });
   };
 
@@ -164,7 +172,6 @@ export default function ProfileEditorPage() {
       if (res.ok && data.profile) {
         setProfile(data.profile);
         if (data.profiles) setProfiles(data.profiles);
-        if (typeof data.redisEnabled === "boolean") setRedisOn(data.redisEnabled);
         const share =
           data.absoluteShareUrl ||
           (data.shareUrl ? `${window.location.origin}${data.shareUrl}` : "");
@@ -288,7 +295,6 @@ export default function ProfileEditorPage() {
             data.absoluteShareUrl ||
             (data.shareUrl ? `${window.location.origin}${data.shareUrl}` : "");
           if (url) setShareUrl(url);
-          if (typeof data.redisEnabled === "boolean") setRedisOn(data.redisEnabled);
         }
       } finally {
         setSaving(false);
@@ -302,56 +308,6 @@ export default function ProfileEditorPage() {
     setCopied(true);
     setMessage("Share link copied! Anyone can open this link (no login needed).");
     setTimeout(() => setCopied(false), 2500);
-  };
-
-
-  const publishShortLink = async () => {
-    setSaving(true);
-    setMessage("");
-    try {
-      // Save first so memory has latest, then force redis publish
-      if (profile) {
-        await fetch("/api/profile", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...profile,
-            id: profile.id,
-            forcePublic: true,
-            isPublic: true,
-          }),
-        });
-      }
-      const res = await fetch("/api/profile/publish", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        setMessage(data.error || "Publish failed");
-        return;
-      }
-      const ok = data.verified
-        ? Object.entries(data.verified as Record<string, boolean>)
-            .filter(([, v]) => v)
-            .map(([s]) => s)
-        : data.published || [];
-      if (ok.length) {
-        setMessage(
-          `Short link published: ${ok.map((s: string) => `/p/${s}`).join(", ")}. Open in a private window.`
-        );
-        if (profile && ok.includes(profile.slug)) {
-          window.open(`/p/${profile.slug}`, "_blank", "noopener,noreferrer");
-        }
-      } else {
-        setMessage(
-          data.tip ||
-            "Publish ran but Redis did not verify. Use Copy share link, or remove huge uploaded photos and try again."
-        );
-      }
-    } catch {
-      setMessage("Publish failed");
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(""), 8000);
-    }
   };
 
   if (loading) {
@@ -497,61 +453,7 @@ export default function ProfileEditorPage() {
         </CardContent>
       </Card>
 
-      <div className="rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm text-brand-900 dark:border-brand-900 dark:bg-brand-950/40 dark:text-brand-100">
-        <p className="font-medium">How to share this card</p>
-        <ul className="mt-1 list-disc space-y-1 pl-5 text-xs sm:text-sm">
-          <li>
-            <strong>Copy share link</strong> — works for anyone on Vercel (long{" "}
-            <code className="rounded bg-white/60 px-1">/c/...</code> URL)
-          </li>
-          <li>
-            <strong>Live Preview / Card Preview</strong> — only while you are logged in
-          </li>
-          <li>
-            Short link{" "}
-            <span className="font-mono text-[11px]">
-              {origin}
-              {publicPath}
-            </span>{" "}
-            needs Redis env vars on Vercel
-          </li>
-          {redisOn === false && (
-            <li className="font-semibold text-amber-900">
-              Redis is OFF — do not send /p/slug to clients yet; use Copy share link
-            </li>
-          )}
-          {redisOn === true && (
-            <li className="text-emerald-800">
-              Redis is ON — click <strong>Publish short /p/ link</strong> after Save, then open in a private window
-            </li>
-          )}
-        </ul>
-        {shareUrl && (
-          <p className="mt-2 break-all rounded-lg bg-white/70 p-2 font-mono text-[10px] text-slate-700 dark:bg-black/20 dark:text-slate-200">
-            {shareUrl}
-          </p>
-        )}
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" type="button" onClick={copyShareLink} loading={saving}>
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copied!" : "Copy share link"}
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            type="button"
-            onClick={publishShortLink}
-            loading={saving}
-          >
-            Publish short /p/ link
-          </Button>
-          <Button size="sm" variant="outline" type="button" asChild>
-            <a href="/dashboard/preview" target="_blank" rel="noreferrer">
-              <Link2 className="h-4 w-4" /> Owner preview
-            </a>
-          </Button>
-        </div>
-      </div>
+
 
       {message && (
         <div
@@ -931,16 +833,70 @@ export default function ProfileEditorPage() {
                 value={profile.address || ""}
                 onChange={(e) => update("address", e.target.value)}
               />
-              <Input
-                label="City"
-                value={profile.city || ""}
-                onChange={(e) => update("city", e.target.value)}
-              />
-              <Input
-                label="Country"
-                value={profile.country || ""}
-                onChange={(e) => update("country", e.target.value)}
-              />
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Country</label>
+                <select
+                  value={profile.country || ""}
+                  onChange={(e) => {
+                    const newCountry = e.target.value;
+                    const cities = getCitiesForCountry(newCountry);
+                    setProfile({
+                      ...profile,
+                      country: newCountry,
+                      city: cities.length > 0 ? cities[0] : (profile.city || ""),
+                    });
+                  }}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
+                >
+                  <option value="">Select Country...</option>
+                  {COUNTRIES_DATA.map((c) => (
+                    <option key={c.code} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">City</label>
+                {getCitiesForCountry(profile.country).length > 0 ? (
+                  <div className="space-y-2">
+                    <select
+                      value={
+                        getCitiesForCountry(profile.country).includes(profile.city || "")
+                          ? profile.city
+                          : "custom"
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val !== "custom") {
+                          update("city", val);
+                        }
+                      }}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
+                    >
+                      {getCitiesForCountry(profile.country).map((cityName) => (
+                        <option key={cityName} value={cityName}>
+                          {cityName}
+                        </option>
+                      ))}
+                      <option value="custom">Other / Custom City...</option>
+                    </select>
+                    {(!profile.city || !getCitiesForCountry(profile.country).includes(profile.city)) && (
+                      <Input
+                        placeholder="Type city name..."
+                        value={profile.city || ""}
+                        onChange={(e) => update("city", e.target.value)}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <Input
+                    placeholder="Enter city..."
+                    value={profile.city || ""}
+                    onChange={(e) => update("city", e.target.value)}
+                  />
+                )}
+              </div>
               <div className="sm:col-span-2">
                 <Input
                   label="Google Maps URL"
@@ -1040,22 +996,25 @@ export default function ProfileEditorPage() {
         <TabsContent value="theme" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Appearance</CardTitle>
+              <CardTitle>Appearance & Colors</CardTitle>
+              <CardDescription>
+                Font color auto-detects dynamically based on primary & background theme color choices for optimal contrast.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">
-                  Primary Color
+                  Primary Theme Color
                 </label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
-                    value={profile.theme.primaryColor}
+                    value={profile.theme.primaryColor || "#1a5ff5"}
                     onChange={(e) => updateTheme("primaryColor", e.target.value)}
                     className="h-11 w-14 cursor-pointer rounded-lg border border-slate-200"
                   />
                   <Input
-                    value={profile.theme.primaryColor}
+                    value={profile.theme.primaryColor || "#1a5ff5"}
                     onChange={(e) => updateTheme("primaryColor", e.target.value)}
                   />
                 </div>
@@ -1067,29 +1026,155 @@ export default function ProfileEditorPage() {
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
-                    value={profile.theme.secondaryColor}
+                    value={profile.theme.secondaryColor || "#22c55e"}
                     onChange={(e) =>
                       updateTheme("secondaryColor", e.target.value)
                     }
                     className="h-11 w-14 cursor-pointer rounded-lg border border-slate-200"
                   />
                   <Input
-                    value={profile.theme.secondaryColor}
+                    value={profile.theme.secondaryColor || "#22c55e"}
                     onChange={(e) =>
                       updateTheme("secondaryColor", e.target.value)
                     }
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Font Text Color (Auto-detected)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-11 w-14 items-center justify-center rounded-lg border border-slate-200 font-bold text-xs shadow-inner"
+                    style={{
+                      backgroundColor: profile.theme.primaryColor || "#1a5ff5",
+                      color: profile.theme.textColor || getContrastColor(profile.theme.primaryColor),
+                    }}
+                  >
+                    Text
+                  </div>
+                  <Input
+                    value={profile.theme.textColor || getContrastColor(profile.theme.primaryColor)}
+                    onChange={(e) => updateTheme("textColor", e.target.value)}
+                    hint="Auto-adjusted for high contrast"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Background Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={profile.theme.backgroundColor || "#f8fafc"}
+                    onChange={(e) => updateTheme("backgroundColor", e.target.value)}
+                    className="h-11 w-14 cursor-pointer rounded-lg border border-slate-200"
+                  />
+                  <Input
+                    value={profile.theme.backgroundColor || "#f8fafc"}
+                    onChange={(e) => updateTheme("backgroundColor", e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center justify-between rounded-xl border border-slate-200 p-4 dark:border-slate-700 sm:col-span-2">
                 <div>
-                  <p className="text-sm font-medium">Show MigSmartCard Branding</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">Show MigSmartCard Branding</p>
+                    {!canUseFeature(planId, "removeBranding") && (
+                      <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800">
+                        Free Plan (Required)
+                      </Badge>
+                    )}
+                  </div>
+                  {!canUseFeature(planId, "removeBranding") ? (
+                    <p className="mt-1 text-xs text-slate-500">
+                      MigSmartCard branding is active and cannot be disabled on the Free option. Upgrade to Pro+ to remove branding.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Toggle to show or remove MigSmartCard branding on your public card.
+                    </p>
+                  )}
                 </div>
                 <Switch
-                  checked={profile.theme.showBranding}
+                  checked={
+                    !canUseFeature(planId, "removeBranding")
+                      ? true
+                      : profile.theme.showBranding !== false
+                  }
+                  disabled={!canUseFeature(planId, "removeBranding")}
                   onCheckedChange={(v) => updateTheme("showBranding", v)}
                 />
               </div>
+
+              {/* Enterprise Branding Options */}
+              {canUseFeature(planId, "removeBranding") && (
+                <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700 sm:col-span-2 space-y-3 bg-slate-50/50 dark:bg-slate-900/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">Enterprise Branding Style</p>
+                      <p className="text-xs text-slate-500">
+                        Choose how branding appears on public card and printable business card designs.
+                      </p>
+                    </div>
+                    {planId === "enterprise" && (
+                      <Badge className="bg-purple-600 text-white text-[10px]">
+                        Enterprise Feature
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(
+                      [
+                        ["full", "Full Logo Text", "Powered by MigSmartCard"],
+                        ["favicon", "Favicon Logo Only", "Minimal icon logo only"],
+                        ["none", "Remove Branding", "No branding displayed"],
+                      ] as const
+                    ).map(([modeId, label, sub]) => {
+                      const active =
+                        (profile.theme.brandingMode || (profile.theme.showBranding === false ? "none" : "full")) === modeId;
+                      return (
+                        <button
+                          key={modeId}
+                          type="button"
+                          onClick={() => {
+                            if (modeId === "none") {
+                              setProfile({
+                                ...profile,
+                                theme: { ...profile.theme, showBranding: false, brandingMode: "none" },
+                              });
+                            } else {
+                              setProfile({
+                                ...profile,
+                                theme: { ...profile.theme, showBranding: true, brandingMode: modeId },
+                              });
+                            }
+                          }}
+                          className={`rounded-xl border p-3 text-left transition ${
+                            active
+                              ? "border-brand-500 bg-brand-50/80 ring-1 ring-brand-500 dark:bg-brand-950/40"
+                              : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            {modeId === "favicon" && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src="/icon.svg" alt="" className="h-4 w-4" />
+                            )}
+                            <p className="text-xs font-semibold">{label}</p>
+                          </div>
+                          <p className="mt-1 text-[10px] text-slate-500">{sub}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

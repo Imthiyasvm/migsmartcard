@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/avatar";
-import { cn, displayWebsiteUrl } from "@/lib/utils";
+import { cn, displayWebsiteUrl, getContrastColor } from "@/lib/utils";
 
 interface Props {
   profile: DigitalProfile;
@@ -189,7 +189,9 @@ export function PublicProfileView({ profile, src }: Props) {
         }
       : { backgroundColor: theme.backgroundColor || "#f8fafc" };
 
-  const textColor = isGlass || isPremium ? "#f8fafc" : theme.textColor || "#0f172a";
+  const textColor = isGlass || isPremium
+    ? "#f8fafc"
+    : theme.textColor || getContrastColor(theme.backgroundColor || "#f8fafc");
 
   return (
     <div className="min-h-screen" style={pageBg}>
@@ -497,10 +499,17 @@ export function PublicProfileView({ profile, src }: Props) {
           <div className="mt-10 text-center">
             <a
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs opacity-50 transition hover:opacity-100"
+              className="inline-flex items-center gap-1.5 text-xs opacity-60 transition hover:opacity-100"
               style={{ color: textColor }}
             >
-              Powered by <span className="font-semibold">MigSmartCard</span>
+              {theme.brandingMode === "favicon" ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src="/icon.svg" alt="MigSmartCard" className="h-5 w-5" />
+              ) : (
+                <>
+                  Powered by <span className="font-semibold">MigSmartCard</span>
+                </>
+              )}
             </a>
           </div>
         )}

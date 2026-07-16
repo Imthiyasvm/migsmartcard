@@ -239,6 +239,17 @@ export async function PUT(req: NextRequest) {
       (next as any)[key] = body[key];
     }
   }
+
+  // Enforce plan branding rules
+  const userObj = db.users.getById(session.user.id);
+  const userPlan = userObj?.plan || session.user.plan || "free";
+  if (userPlan === "free") {
+    next.theme = {
+      ...(next.theme || DEFAULT_THEME),
+      showBranding: true,
+      brandingMode: "full",
+    };
+  }
   
   // Normalize website URL to ensure consistent storage
   if (body.website !== undefined) {

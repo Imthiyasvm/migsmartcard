@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Smartphone,
   Monitor,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,11 +24,13 @@ import { DigitalProfile } from "@/types";
 import { getPlan } from "@/lib/plans";
 import { buildSharePath } from "@/lib/share-token";
 import { cn, getInitials, displayWebsiteUrl } from "@/lib/utils";
+import { ImageUpload } from "@/components/image-upload";
 
 type Orientation = "landscape" | "portrait";
-type StyleId = "white" | "black" | "custom";
+type StyleId = "white" | "black" | "glass" | "custom";
 type FontWeight = "600" | "700" | "800";
 type NameSize = "md" | "lg" | "xl";
+type BrandingOption = "full" | "favicon" | "none";
 
 const STYLES: Record<
   StyleId,
@@ -58,6 +61,15 @@ const STYLES: Record<
     accent: "#fbbf24",
     muted: "rgba(250,250,249,0.72)",
     qrPad: "#ffffff",
+  },
+  glass: {
+    name: "Glassmorphism",
+    bg0: "#0f172a",
+    bg1: "#1e1b4b",
+    fg: "#ffffff",
+    accent: "#38bdf8",
+    muted: "rgba(255,255,255,0.85)",
+    qrPad: "rgba(255,255,255,0.92)",
   },
   custom: {
     name: "Custom",
@@ -92,16 +104,17 @@ function drawCover(
   img: HTMLImageElement,
   x: number,
   y: number,
-  size: number
+  w: number,
+  h: number
 ) {
   const iw = img.naturalWidth || img.width;
   const ih = img.naturalHeight || img.height;
-  const scale = Math.max(size / iw, size / ih);
-  const sw = size / scale;
-  const sh = size / scale;
+  const scale = Math.max(w / iw, h / ih);
+  const sw = w / scale;
+  const sh = h / scale;
   const sx = (iw - sw) / 2;
   const sy = (ih - sh) / 2;
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, size, size);
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
 function roundRect(
@@ -127,11 +140,12 @@ export default function BusinessCardDesignerPage() {
   const planId = session?.user?.plan || "free";
   const plan = getPlan(planId);
   const allowed = plan.limits.businessCardDesigner;
+  const canRemoveBranding = plan.limits.removeBranding;
 
   const [profiles, setProfiles] = useState<DigitalProfile[]>([]);
   const [profileId, setProfileId] = useState("");
   const [orientation, setOrientation] = useState<Orientation>("landscape");
-  const [styleId, setStyleId] = useState<StyleId>("black");
+  const [styleId, setStyleId] = useState<StyleId>("glass");
   const [customAccent, setCustomAccent] = useState("#1a5ff5");
   const [customBg, setCustomBg] = useState("#0b1224");
   const [photoShape, setPhotoShape] = useState<"circle" | "square">("circle");
@@ -142,6 +156,7 @@ export default function BusinessCardDesignerPage() {
   const [showWebsite, setShowWebsite] = useState(true);
   const [showEmail, setShowEmail] = useState(true);
   const [showPhone, setShowPhone] = useState(true);
+  const [brandingMode, setBrandingMode] = useState<BrandingOption>("full");
   const [qrUrl, setQrUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -158,6 +173,7 @@ export default function BusinessCardDesignerPage() {
         if (primary) {
           setProfileId(primary.id);
           if (primary.theme?.photoShape === "square") setPhotoShape("square");
+          if (primary.theme?.brandingMode) setBrandingMode(primary.theme.brandingMode);
         }
       })
       .finally(() => setLoading(false));
@@ -178,6 +194,20 @@ export default function BusinessCardDesignerPage() {
     }
     setQrUrl(`/api/qr?url=${encodeURIComponent(target)}&format=png&size=720`);
   }, [profile]);
+
+  const updateProfilePhoto = (newUrl: string) => {
+    if (!profile) return;
+    const next = { ...profile, profilePhoto: newUrl };
+    setProfiles((prev) =>
+      prev.map((p) => (p.id === profile.id ? next : p))
+    );
+    // Persist via PUT
+    fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...next, id: next.id }),
+    }).catch(() => {});
+  };
 
   const isLandscape = orientation === "landscape";
 
@@ -200,32 +230,99 @@ export default function BusinessCardDesignerPage() {
     let cancelled = false;
 
     (async () => {
-      const g = ctx.createLinearGradient(0, 0, W, H);
-      g.addColorStop(0, style.bg0);
-      g.addColorStop(1, style.bg1);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.strokeStyle =
-        styleId === "white" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.12)";
-      ctx.lineWidth = 3;
-      roundRect(ctx, 20, 20, W - 40, H - 40, 32);
-      ctx.stroke();
-
-      const rg = ctx.createRadialGradient(W * 0.15, 0, 20, W * 0.2, 0, W * 0.55);
-      rg.addColorStop(0, "rgba(255,255,255,0.14)");
-      rg.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = rg;
-      ctx.fillRect(0, 0, W, H);
-
+      // Load both uploaded images (profile photo + cover image)
       const photo = profile.profilePhoto
         ? await loadImage(profile.profilePhoto)
+        : null;
+      const cover = profile.coverImage
+        ? await loadImage(profile.coverImage)
         : null;
       const qr = qrUrl ? await loadImage(qrUrl) : null;
       const logo = await loadImage(
         styleId === "white" ? "/brand/logo.svg" : "/brand/logo-dark.svg"
       );
+      const faviconLogo = await loadImage("/icon.svg");
+
       if (cancelled) return;
+
+      // Draw background
+      if (styleId === "glass" && cover) {
+        // 2-Image Aspect: Cover as rich blurred backdrop
+        drawCover(ctx, cover, 0, 0, W, H);
+        // Dark translucent vignette over background
+        const bgOverlay = ctx.createLinearGradient(0, 0, W, H);
+        bgOverlay.addColorStop(0, "rgba(15, 23, 42, 0.70)");
+        bgOverlay.addColorStop(1, "rgba(15, 23, 42, 0.88)");
+        ctx.fillStyle = bgOverlay;
+        ctx.fillRect(0, 0, W, H);
+      } else {
+        const g = ctx.createLinearGradient(0, 0, W, H);
+        g.addColorStop(0, style.bg0);
+        g.addColorStop(1, style.bg1);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+
+        if (cover) {
+          ctx.globalAlpha = 0.25;
+          drawCover(ctx, cover, 0, 0, W, H);
+          ctx.globalAlpha = 1.0;
+        }
+      }
+
+      // Border frame
+      ctx.strokeStyle =
+        styleId === "white"
+          ? "rgba(15,23,42,0.08)"
+          : "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 3;
+      roundRect(ctx, 20, 20, W - 40, H - 40, 32);
+      ctx.stroke();
+
+      // Glassmorphism Frosted Panels
+      if (styleId === "glass") {
+        if (isLandscape) {
+          // Left card panel for profile photo
+          ctx.fillStyle = "rgba(255, 255, 255, 0.10)";
+          roundRect(ctx, 40, 40, 240, H - 80, 28);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+          ctx.lineWidth = 1.5;
+          roundRect(ctx, 40, 40, 240, H - 80, 28);
+          ctx.stroke();
+
+          // Main panel for text details
+          ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+          roundRect(ctx, 300, 40, W - 640, H - 80, 28);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.20)";
+          roundRect(ctx, 300, 40, W - 640, H - 80, 28);
+          ctx.stroke();
+
+          // QR panel
+          ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+          roundRect(ctx, W - 310, 40, 270, H - 80, 28);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+          roundRect(ctx, W - 310, 40, 270, H - 80, 28);
+          ctx.stroke();
+        } else {
+          // Portrait layout frosted panels
+          ctx.fillStyle = "rgba(255, 255, 255, 0.10)";
+          roundRect(ctx, 40, 40, W - 80, 300, 28);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+          ctx.lineWidth = 1.5;
+          roundRect(ctx, 40, 40, W - 80, 300, 28);
+          ctx.stroke();
+
+          ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+          roundRect(ctx, 40, 360, W - 80, H - 420, 28);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.20)";
+          roundRect(ctx, 40, 360, W - 80, H - 420, 28);
+          ctx.stroke();
+        }
+      }
 
       const drawAvatar = (x: number, y: number, size: number) => {
         ctx.save();
@@ -239,10 +336,10 @@ export default function BusinessCardDesignerPage() {
           ctx.clip();
         }
         if (photo) {
-          drawCover(ctx, photo, x, y, size);
+          drawCover(ctx, photo, x, y, size, size);
         } else {
           ctx.fillStyle =
-            styleId === "white" ? "#e2e8f0" : "rgba(255,255,255,0.12)";
+            styleId === "white" ? "#e2e8f0" : "rgba(255,255,255,0.15)";
           ctx.fillRect(x, y, size, size);
           ctx.fillStyle = style.accent;
           ctx.font = `bold ${Math.floor(size * 0.28)}px Inter, system-ui, sans-serif`;
@@ -256,7 +353,7 @@ export default function BusinessCardDesignerPage() {
         }
         ctx.restore();
         ctx.strokeStyle = style.accent;
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 5;
         if (photoShape === "circle") {
           ctx.beginPath();
           ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
@@ -273,7 +370,7 @@ export default function BusinessCardDesignerPage() {
         roundRect(ctx, x, y, size, size, 22);
         ctx.fill();
         ctx.strokeStyle =
-          styleId === "white" ? "rgba(15,23,42,0.08)" : "rgba(0,0,0,0.06)";
+          styleId === "white" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.3)";
         ctx.lineWidth = 2;
         roundRect(ctx, x, y, size, size, 22);
         ctx.stroke();
@@ -288,10 +385,11 @@ export default function BusinessCardDesignerPage() {
         fontWeight === "600" ? "600" : fontWeight === "700" ? "700" : "800";
 
       if (isLandscape) {
-        const avatar = 210; // bigger photo
-        const qrSize = 240;
-        drawAvatar(52, H / 2 - avatar / 2, avatar);
-        const tx = 300;
+        const avatar = 180;
+        const qrSize = 210;
+        drawAvatar(70, H / 2 - avatar / 2 - 20, avatar);
+
+        const tx = 325;
         ctx.textAlign = "left";
         ctx.fillStyle = style.fg;
         ctx.font = `${weight} ${namePx}px Inter, system-ui, sans-serif`;
@@ -322,20 +420,21 @@ export default function BusinessCardDesignerPage() {
         if (showPhone && profile.phone) {
           ctx.fillText(profile.phone.trim(), tx, ty, 560);
         }
-        drawQr(W - 310, H / 2 - qrSize / 2, qrSize);
+
+        drawQr(W - 280, H / 2 - qrSize / 2 - 15, qrSize);
         ctx.fillStyle = style.muted;
         ctx.font = "15px Inter, system-ui, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Scan digital card", W - 190, H / 2 + qrSize / 2 + 30);
+        ctx.fillText("Scan digital card", W - 175, H / 2 + qrSize / 2 + 15);
       } else {
-        const avatar = 240;
-        const qrSize = 280;
-        drawAvatar(W / 2 - avatar / 2, 64, avatar);
+        const avatar = 210;
+        const qrSize = 250;
+        drawAvatar(W / 2 - avatar / 2, 80, avatar);
         ctx.textAlign = "center";
         ctx.fillStyle = style.fg;
         ctx.font = `${weight} ${namePx}px Inter, system-ui, sans-serif`;
-        ctx.fillText(profile.fullName || "Your Name", W / 2, 360, W - 80);
-        let ty = 410;
+        ctx.fillText(profile.fullName || "Your Name", W / 2, 380, W - 80);
+        let ty = 430;
         if (showTitle && profile.jobTitle) {
           ctx.fillStyle = style.muted;
           ctx.font = "24px Inter, system-ui, sans-serif";
@@ -357,24 +456,35 @@ export default function BusinessCardDesignerPage() {
         if (showEmail && profile.email) {
           ctx.fillText(profile.email, W / 2, ty, W - 80);
         }
-        drawQr(W / 2 - qrSize / 2, H - 420, qrSize);
+        drawQr(W / 2 - qrSize / 2, H - 410, qrSize);
         ctx.fillStyle = style.muted;
         ctx.font = "16px Inter, system-ui, sans-serif";
-        ctx.fillText("Scan to connect", W / 2, H - 110);
+        ctx.fillText("Scan to connect", W / 2, H - 120);
       }
 
-      // Brand logo
-      if (logo) {
-        const lw = 160;
-        const lh = (logo.height / logo.width) * lw;
-        ctx.globalAlpha = 0.85;
-        ctx.drawImage(logo, 36, H - lh - 28, lw, lh);
+      // Branding rendering based on Enterprise option
+      if (canRemoveBranding && brandingMode === "none") {
+        // Skip branding completely for enterprise / pro users
+      } else if (brandingMode === "favicon" && faviconLogo) {
+        // Enterprise option: Keep only the favicon logo for branding
+        const size = 36;
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(faviconLogo, 36, H - size - 28, size, size);
         ctx.globalAlpha = 1;
       } else {
-        ctx.textAlign = "left";
-        ctx.fillStyle = style.muted;
-        ctx.font = "13px Inter, system-ui, sans-serif";
-        ctx.fillText("MigSmartCard", 36, H - 28);
+        // Full logo branding
+        if (logo) {
+          const lw = 160;
+          const lh = (logo.height / logo.width) * lw;
+          ctx.globalAlpha = 0.85;
+          ctx.drawImage(logo, 36, H - lh - 28, lw, lh);
+          ctx.globalAlpha = 1;
+        } else {
+          ctx.textAlign = "left";
+          ctx.fillStyle = style.muted;
+          ctx.font = "13px Inter, system-ui, sans-serif";
+          ctx.fillText("MigSmartCard", 36, H - 28);
+        }
       }
     })();
 
@@ -397,6 +507,8 @@ export default function BusinessCardDesignerPage() {
     showWebsite,
     showEmail,
     showPhone,
+    brandingMode,
+    canRemoveBranding,
   ]);
 
   const downloadPng = () => {
@@ -431,8 +543,7 @@ export default function BusinessCardDesignerPage() {
           Premium business cards
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          White, black, or custom layouts with large photo, QR, and text style
-          controls. Pro and above.
+          Glassmorphism 2-image cards, White, Black, or Custom layouts with large photo, QR, and text style controls. Pro and above.
         </p>
         <Button className="mt-6" asChild>
           <Link href="/dashboard/billing">Upgrade plan</Link>
@@ -460,7 +571,7 @@ export default function BusinessCardDesignerPage() {
             Business card designer
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Premium models · large centered photo · text styles · QR
+            Glassmorphism 2-image models · interactive photo cropper · enterprise branding controls
           </p>
         </div>
         <Button size="sm" onClick={downloadPng} loading={exporting}>
@@ -468,7 +579,7 @@ export default function BusinessCardDesignerPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -491,6 +602,29 @@ export default function BusinessCardDesignerPage() {
                   <RefreshCw className="h-4 w-4" /> Edit profile
                 </Link>
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Profile Photo Uploader & Cropper in Business Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center justify-between">
+                <span>Profile Photo Crop</span>
+                <Sparkles className="h-4 w-4 text-brand-600" />
+              </CardTitle>
+              <CardDescription>
+                Crop or upload the photo used on your business card design
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ImageUpload
+                label="Profile photo"
+                kind="photo"
+                aspect={photoShape === "square" ? "square" : "circle"}
+                value={profile.profilePhoto || ""}
+                onChange={(url) => updateProfilePhoto(url)}
+                hint="Crop photo to zoom, rotate, or align cleanly"
+              />
             </CardContent>
           </Card>
 
@@ -524,24 +658,34 @@ export default function BusinessCardDesignerPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Premium models</CardTitle>
-              <CardDescription>White · Black · Custom</CardDescription>
+              <CardTitle className="text-base flex items-center justify-between">
+                <span>Design models</span>
+                <Badge variant="outline" className="text-[10px]">
+                  2-Image Aspect
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Glassmorphism · White · Black · Custom
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {(Object.keys(STYLES) as StyleId[]).map((id) => (
                   <button
                     key={id}
                     type="button"
                     onClick={() => setStyleId(id)}
                     className={cn(
-                      "rounded-xl border p-3 text-center text-xs font-semibold",
+                      "rounded-xl border p-2.5 text-center text-xs font-semibold transition",
                       styleId === id
-                        ? "border-brand-500 ring-1 ring-brand-500"
+                        ? "border-brand-500 ring-2 ring-brand-500"
                         : "border-slate-200 dark:border-slate-700"
                     )}
                     style={{
-                      background: `linear-gradient(135deg, ${STYLES[id].bg0}, ${STYLES[id].bg1})`,
+                      background:
+                        id === "glass"
+                          ? "linear-gradient(135deg, #0f172a, #312e81)"
+                          : `linear-gradient(135deg, ${STYLES[id].bg0}, ${STYLES[id].bg1})`,
                       color: STYLES[id].fg,
                     }}
                   >
@@ -550,7 +694,7 @@ export default function BusinessCardDesignerPage() {
                 ))}
               </div>
               {styleId === "custom" && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 pt-2">
                   <div>
                     <label className="mb-1 block text-xs font-medium">
                       Accent
@@ -574,6 +718,56 @@ export default function BusinessCardDesignerPage() {
                     />
                   </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Branding Control for Enterprise */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Branding mode</CardTitle>
+              <CardDescription>
+                Customize brand logo on printable business cards
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ["full", "Full Logo"],
+                    ["favicon", "Favicon Logo Only"],
+                    ["none", "No Branding"],
+                  ] as const
+                ).map(([modeId, label]) => {
+                  const active = brandingMode === modeId;
+                  const isLocked = !canRemoveBranding && modeId !== "full";
+                  return (
+                    <button
+                      key={modeId}
+                      type="button"
+                      disabled={isLocked}
+                      onClick={() => setBrandingMode(modeId)}
+                      className={cn(
+                        "rounded-xl border p-2.5 text-center text-xs font-medium transition flex flex-col items-center justify-center gap-1",
+                        active
+                          ? "border-brand-500 bg-brand-50 font-semibold text-brand-700 dark:bg-brand-950/40"
+                          : "border-slate-200 dark:border-slate-700",
+                        isLocked && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      {modeId === "favicon" && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src="/icon.svg" alt="" className="h-4 w-4" />
+                      )}
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {!canRemoveBranding && (
+                <p className="text-[11px] text-slate-500">
+                  Favicon logo & remove branding options require Enterprise or Pro plans.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -670,13 +864,6 @@ export default function BusinessCardDesignerPage() {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardContent className="space-y-2 p-4 text-xs text-slate-500">
-              <p>Extra-large photo (center-cropped) + large QR for print.</p>
-              <Badge className="capitalize">{plan.name}</Badge>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="flex flex-col items-center rounded-2xl border border-slate-200 bg-slate-100/80 p-6 dark:border-slate-800 dark:bg-slate-900/40">
@@ -685,7 +872,7 @@ export default function BusinessCardDesignerPage() {
           </p>
           <div
             className={cn(
-              "overflow-hidden rounded-2xl shadow-card",
+              "overflow-hidden rounded-2xl shadow-card transition-all duration-300",
               isLandscape ? "w-full max-w-[620px]" : "w-full max-w-[360px]"
             )}
           >
