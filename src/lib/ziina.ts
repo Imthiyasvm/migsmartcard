@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { db } from "@/lib/db";
 
 /**
  * Ziina (UAE) payment gateway client.
@@ -8,8 +9,9 @@ import crypto from "crypto";
  * - Webhooks are authenticated with an `X-Hmac-Signature` header:
  *   hex-encoded HMAC-SHA256 of the raw request body using the webhook secret.
  *
- * When ZIINA_API_TOKEN is not set the app stays in simulated mode
- * (see src/lib/billing.ts) — no real charges, demos keep working.
+ * Credentials come from environment variables first; if they are absent the
+ * platform settings saved by the admin (Admin → Settings → Ziina) are used.
+ * With no configured token, the app stays in simulated mode.
  */
 
 const API_BASE = (
@@ -36,17 +38,24 @@ export interface ZiinaPaymentIntent {
   [key: string]: unknown;
 }
 
+/** API token: env var wins, then the value saved by the admin. */
 export function ziinaApiToken(): string {
-  return (process.env.ZIINA_API_TOKEN || "").trim();
+  const env = (process.env.ZIINA_API_TOKEN || "").trim();
+  return env || (db.settings.get().ziinaApiToken || "").trim();
 }
 
+/** Webhook secret: env var wins, then the value saved by the admin. */
 export function ziinaWebhookSecret(): string {
-  return (process.env.ZIINA_WEBHOOK_SECRET || "").trim();
+  const env = (process.env.ZIINA_WEBHOOK_SECRET || "").trim();
+  return env || (db.settings.get().ziinaWebhookSecret || "").trim();
 }
 
 /** Test mode unless explicitly disabled — never charge real cards by accident. */
 export function ziinaTestMode(): boolean {
-  return (process.env.ZIINA_TEST_MODE || "true").trim().toLowerCase() !== "false";
+  const env = (process.env.ZIINA_TEST_MODE || "").trim();
+  if (env) return env.toLowerCase() !== "false";
+  const stored = db.settings.get().ziinaTestMode;
+  return stored === undefined ? true : stored;
 }
 
 export function isZiinaConfigured(): boolean {

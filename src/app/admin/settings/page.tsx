@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AccountSettingsForm } from "@/components/account/account-settings-form";
+import { ZiinaSettingsForm } from "@/components/admin/ziina-settings-form";
 
 export default function AdminSettingsPage() {
   const { data: session } = useSession();
@@ -53,6 +54,8 @@ export default function AdminSettingsPage() {
       </Card>
 
       <AccountSettingsForm />
+
+      <ZiinaSettingsForm />
     </div>
   );
 }

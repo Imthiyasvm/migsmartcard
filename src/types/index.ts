@@ -190,6 +190,17 @@ export interface SessionUser {
 export type PaymentStatus = "pending" | "completed" | "failed" | "cancelled";
 export type PaymentType = "subscription" | "order";
 
+/** Platform-wide settings, editable by the admin (env vars take precedence). */
+export interface PlatformSettings {
+  id: "platform";
+  /** Ziina gateway credentials — stored server-side, never sent to clients */
+  ziinaApiToken?: string;
+  ziinaWebhookSecret?: string;
+  /** undefined = default (test mode on) */
+  ziinaTestMode?: boolean;
+  updatedAt: string;
+}
+
 /** A single transaction — either a subscription upgrade or a card order. */
 export interface Payment {
   id: string;

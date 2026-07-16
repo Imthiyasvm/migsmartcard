@@ -11,7 +11,19 @@ orders. Until the API key is configured, all billing/ordering runs in
 2. Go to **Developers → API keys**
 3. Create a key and copy the bearer token
 
-## 2. Configure environment variables
+## 2. Configure the gateway
+
+### Option A: Admin dashboard (no redeploy)
+
+Sign in as the platform administrator and open **Admin → Settings → Ziina
+Payments**. Paste the API token and webhook secret, choose test or live mode,
+and save. Credentials remain server-side; the browser only receives presence,
+source, and the token's last four characters.
+
+### Option B: Environment variables
+
+Environment variables always take precedence over admin-saved values, which is
+useful when production and staging need separate credentials.
 
 ```env
 ZIINA_API_TOKEN=<bearer token>                 # from step 1
