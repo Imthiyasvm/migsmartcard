@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn, displayWebsiteUrl } from "@/lib/utils";
 
 interface Props {
   profile: DigitalProfile;
@@ -127,7 +127,12 @@ export function PublicProfileView({ profile, src }: Props) {
         device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
       }),
     }).catch(() => {});
-    window.open(url, "_blank", "noopener");
+    // Ensure URL has protocol before opening
+    let normalizedUrl = url.trim();
+    if (normalizedUrl && !/^https?:\/\//i.test(normalizedUrl) && !/^mailto:/i.test(normalizedUrl) && !/^tel:/i.test(normalizedUrl)) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+    window.open(normalizedUrl, "_blank", "noopener");
   };
 
   const submitLead = async (e: React.FormEvent) => {
@@ -359,7 +364,11 @@ export function PublicProfileView({ profile, src }: Props) {
           )}
           {profile.website && (
             <button
-              onClick={() => handleLinkClick("Website", profile.website!)}
+              onClick={() => {
+                let url = profile.website!;
+                if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+                handleLinkClick("Website", url);
+              }}
               className={cn("flex w-full items-center gap-3 p-4", panel)}
             >
               <div
@@ -369,7 +378,7 @@ export function PublicProfileView({ profile, src }: Props) {
                 <Globe className="h-4 w-4" style={{ color: primary }} />
               </div>
               <span className="text-sm font-medium" style={{ color: textColor }}>
-                {profile.website.replace(/^https?:\/\//, "")}
+                {displayWebsiteUrl(profile.website)}
               </span>
             </button>
           )}
@@ -398,10 +407,18 @@ export function PublicProfileView({ profile, src }: Props) {
 
         {Object.keys(profile.social || {}).length > 0 && (
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            {Object.entries(profile.social || {}).map(([key, url]) => {
-              if (!url) return null;
+            {Object.entries(profile.social || {}).map(([key, rawUrl]) => {
+              if (!rawUrl) return null;
+              // Normalize URL — add https:// if no protocol
+              const url = (() => {
+                const u = rawUrl.trim();
+                if (key === "whatsapp") return u; // phone number, handled separately
+                if (/^https?:\/\//i.test(u)) return u;
+                return `https://${u}`;
+              })();
+              
               if (key === "whatsapp") {
-                const phone = url.replace(/\D/g, "");
+                const phone = rawUrl.replace(/\D/g, "");
                 return (
                   <a
                     key={key}
@@ -445,27 +462,34 @@ export function PublicProfileView({ profile, src }: Props) {
 
         {(profile.customLinks || []).length > 0 && (
           <div className="mt-6 space-y-2">
-            {profile.customLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => handleLinkClick(link.title, link.url)}
-                className={cn(
-                  "flex w-full items-center justify-between p-4",
-                  panel
-                )}
-              >
-                <span
-                  className="text-sm font-semibold"
-                  style={{ color: textColor }}
+            {profile.customLinks.map((link) => {
+              // Normalize URL for click handler
+              let linkUrl = (link.url || "").trim();
+              if (linkUrl && !/^https?:\/\//i.test(linkUrl) && !/^mailto:/i.test(linkUrl) && !/^tel:/i.test(linkUrl)) {
+                linkUrl = `https://${linkUrl}`;
+              }
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => handleLinkClick(link.title, linkUrl)}
+                  className={cn(
+                    "flex w-full items-center justify-between p-4",
+                    panel
+                  )}
                 >
-                  {link.title}
-                </span>
-                <ExternalLink
-                  className="h-4 w-4 opacity-60"
-                  style={{ color: textColor }}
-                />
-              </button>
-            ))}
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: textColor }}
+                  >
+                    {link.title}
+                  </span>
+                  <ExternalLink
+                    className="h-4 w-4 opacity-60"
+                    style={{ color: textColor }}
+                  />
+                </button>
+              );
+            })}
           </div>
         )}
 

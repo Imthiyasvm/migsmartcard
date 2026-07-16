@@ -54,3 +54,56 @@ export function absoluteUrl(path: string): string {
     ? `${process.env.NEXTAUTH_URL}${path}`
     : `http://localhost:3000${path}`;
 }
+
+/**
+ * Normalize a website URL to ensure it has a valid protocol.
+ * - Adds https:// if no protocol is present
+ * - Removes trailing slashes
+ * - Handles empty/invalid input gracefully
+ */
+export function normalizeWebsiteUrl(url: string | undefined | null): string {
+  if (!url || typeof url !== "string") return "";
+  
+  let normalized = url.trim();
+  
+  // Return empty if no meaningful content
+  if (!normalized) return "";
+  
+  // Add https:// if no protocol is present
+  if (!/^https?:\/\//i.test(normalized)) {
+    normalized = `https://${normalized}`;
+  }
+  
+  // Remove trailing slash
+  normalized = normalized.replace(/\/+$/, "");
+  
+  return normalized;
+}
+
+/**
+ * Display a website URL in a user-friendly format (without protocol, without www)
+ */
+export function displayWebsiteUrl(url: string | undefined | null): string {
+  if (!url || typeof url !== "string") return "";
+  
+  return url
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/+$/, "");
+}
+
+/**
+ * Validate if a string is a valid URL format
+ */
+export function isValidUrl(url: string | undefined | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  
+  try {
+    const normalized = normalizeWebsiteUrl(url);
+    new URL(normalized);
+    return true;
+  } catch {
+    return false;
+  }
+}
