@@ -44,13 +44,10 @@ body {
   background: #334155;
 }
 
-/* Profile card glass effect */
-.profile-glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.dark .profile-glass {
-  background: rgba(15, 23, 42, 0.85);
+/* Subtle glassmorphism helpers (used in 2-image glass card designs) */
+.glass-surface {
+  background: rgba(255, 255, 255, 0.085);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
