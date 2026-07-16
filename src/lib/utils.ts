@@ -94,6 +94,25 @@ export function displayWebsiteUrl(url: string | undefined | null): string {
 }
 
 /**
+ * Calculate appropriate contrast text color (#0f172a or #ffffff) for a given hex background color
+ */
+export function getContrastColor(hexColor: string | undefined | null): string {
+  if (!hexColor || typeof hexColor !== "string") return "#0f172a";
+  let hex = hexColor.replace("#", "").trim();
+  if (hex.length === 3) {
+    hex = hex.split("").map((c) => c + c).join("");
+  }
+  if (hex.length !== 6) return "#0f172a";
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return "#0f172a";
+  // YIQ luminance formula
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 150 ? "#0f172a" : "#ffffff";
+}
+
+/**
  * Validate if a string is a valid URL format
  */
 export function isValidUrl(url: string | undefined | null): boolean {

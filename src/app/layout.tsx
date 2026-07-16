@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "./fonts/GeistVF.woff",
   variable: "--font-inter",
+  weight: "100 900",
 });
 
-const display = Plus_Jakarta_Sans({
-  subsets: ["latin"],
+const display = localFont({
+  src: "./fonts/GeistVF.woff",
   variable: "--font-display",
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {

@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { ImagePlus, Loader2, Trash2, Crop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ImageCropModal } from "@/components/image-crop-modal";
 
 interface ImageUploadProps {
   label: string;
@@ -36,7 +37,6 @@ async function processImage(
   let sw = bitmap.width;
   let sh = bitmap.height;
 
-  // Center-center square crop for profile photos (fits round masks)
   if (kind === "photo" && centerCrop) {
     const side = Math.min(bitmap.width, bitmap.height);
     sx = Math.floor((bitmap.width - side) / 2);
@@ -80,6 +80,8 @@ export function ImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropSource, setCropSource] = useState("");
 
   const pick = () => inputRef.current?.click();
 
@@ -123,12 +125,30 @@ export function ImageUpload({
       }
       onChange(data.url);
       onUploaded?.(data.url);
+
+      // Offer automatic crop modal for profile photos
+      if (kind === "photo") {
+        setCropSource(data.url);
+        setShowCropModal(true);
+      }
     } catch {
       setError("Upload failed — try a smaller JPG/PNG");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
+  };
+
+  const handleManualCrop = () => {
+    if (value) {
+      setCropSource(value);
+      setShowCropModal(true);
+    }
+  };
+
+  const handleCropComplete = async (croppedUrl: string) => {
+    onChange(croppedUrl);
+    onUploaded?.(croppedUrl);
   };
 
   const shapeClass =
@@ -144,18 +164,29 @@ export function ImageUpload({
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
         </label>
-        {value && (
-          <button
-            type="button"
-            onClick={() => {
-              onChange("");
-              onUploaded?.("");
-            }}
-            className="flex items-center gap-1 text-xs text-red-500 hover:underline"
-          >
-            <Trash2 className="h-3 w-3" /> Remove
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {value && kind === "photo" && (
+            <button
+              type="button"
+              onClick={handleManualCrop}
+              className="flex items-center gap-1 text-xs text-brand-600 hover:underline font-medium"
+            >
+              <Crop className="h-3 w-3" /> Crop
+            </button>
+          )}
+          {value && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                onUploaded?.("");
+              }}
+              className="flex items-center gap-1 text-xs text-red-500 hover:underline"
+            >
+              <Trash2 className="h-3 w-3" /> Remove
+            </button>
+          )}
+        </div>
       </div>
 
       <div
@@ -191,17 +222,28 @@ export function ImageUpload({
         )}
 
         {value && (
-          <div className="absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-black/50 to-transparent p-2">
+          <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 bg-gradient-to-t from-black/60 to-transparent p-2">
             <Button
               type="button"
               size="sm"
               variant="secondary"
               onClick={pick}
               disabled={uploading}
-              className="h-8 text-xs"
+              className="h-7 text-[11px] px-2.5"
             >
               {uploading ? "..." : "Change"}
             </Button>
+            {kind === "photo" && (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={handleManualCrop}
+                className="h-7 text-[11px] px-2.5 gap-1"
+              >
+                <Crop className="h-3 w-3" /> Crop
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -216,6 +258,15 @@ export function ImageUpload({
 
       {hint && <p className="text-xs text-slate-500">{hint}</p>}
       {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <ImageCropModal
+        isOpen={showCropModal}
+        imageSrc={cropSource}
+        onClose={() => setShowCropModal(false)}
+        onCropComplete={handleCropComplete}
+        aspect={aspect === "circle" ? "circle" : "square"}
+        title={`Crop ${label}`}
+      />
     </div>
   );
 }

@@ -34,6 +34,8 @@ export interface ProfileTheme {
   layout?: "classic" | "glass" | "premium";
   /** Profile photo mask on digital card */
   photoShape?: "circle" | "square";
+  /** Branding display mode for enterprise/pro: full | favicon | none */
+  brandingMode?: "full" | "favicon" | "none";
 }
 
 export interface DigitalProfile {
