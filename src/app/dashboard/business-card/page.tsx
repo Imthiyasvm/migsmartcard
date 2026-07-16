@@ -278,50 +278,22 @@ export default function BusinessCardDesignerPage() {
       roundRect(ctx, 20, 20, W - 40, H - 40, 32);
       ctx.stroke();
 
-      // Glassmorphism Frosted Panels
+      // Subtle glassmorphism overlay (2-image design: cover + frosted glass card surface)
+      // Removed previous heavy multi-panel frosted glass effect for cleaner modern look
       if (styleId === "glass") {
-        if (isLandscape) {
-          // Left card panel for profile photo
-          ctx.fillStyle = "rgba(255, 255, 255, 0.10)";
-          roundRect(ctx, 40, 40, 240, H - 80, 28);
-          ctx.fill();
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-          ctx.lineWidth = 1.5;
-          roundRect(ctx, 40, 40, 240, H - 80, 28);
-          ctx.stroke();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.085)";
+        roundRect(ctx, 26, 26, W - 52, H - 52, 30);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+        ctx.lineWidth = 1.1;
+        roundRect(ctx, 26, 26, W - 52, H - 52, 30);
+        ctx.stroke();
 
-          // Main panel for text details
-          ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-          roundRect(ctx, 300, 40, W - 640, H - 80, 28);
-          ctx.fill();
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.20)";
-          roundRect(ctx, 300, 40, W - 640, H - 80, 28);
-          ctx.stroke();
-
-          // QR panel
-          ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
-          roundRect(ctx, W - 310, 40, 270, H - 80, 28);
-          ctx.fill();
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-          roundRect(ctx, W - 310, 40, 270, H - 80, 28);
-          ctx.stroke();
-        } else {
-          // Portrait layout frosted panels
-          ctx.fillStyle = "rgba(255, 255, 255, 0.10)";
-          roundRect(ctx, 40, 40, W - 80, 300, 28);
-          ctx.fill();
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-          ctx.lineWidth = 1.5;
-          roundRect(ctx, 40, 40, W - 80, 300, 28);
-          ctx.stroke();
-
-          ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-          roundRect(ctx, 40, 360, W - 80, H - 420, 28);
-          ctx.fill();
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.20)";
-          roundRect(ctx, 40, 360, W - 80, H - 420, 28);
-          ctx.stroke();
-        }
+        // soft inner glass highlight
+        ctx.strokeStyle = "rgba(255,255,255,0.07)";
+        ctx.lineWidth = 0.8;
+        roundRect(ctx, 38, 38, W - 76, H - 76, 22);
+        ctx.stroke();
       }
 
       const drawAvatar = (x: number, y: number, size: number) => {
@@ -474,16 +446,17 @@ export default function BusinessCardDesignerPage() {
       } else {
         // Full logo branding
         if (logo) {
-          const lw = 160;
+          // Use same logo size perspective as reference business card designs (smaller, clean bottom-left)
+          const lw = 112;
           const lh = (logo.height / logo.width) * lw;
-          ctx.globalAlpha = 0.85;
-          ctx.drawImage(logo, 36, H - lh - 28, lw, lh);
+          ctx.globalAlpha = 0.82;
+          ctx.drawImage(logo, 38, H - lh - 26, lw, lh);
           ctx.globalAlpha = 1;
         } else {
           ctx.textAlign = "left";
           ctx.fillStyle = style.muted;
           ctx.font = "13px Inter, system-ui, sans-serif";
-          ctx.fillText("MigSmartCard", 36, H - 28);
+          ctx.fillText("MigSmartCard", 38, H - 26);
         }
       }
     })();
@@ -665,7 +638,7 @@ export default function BusinessCardDesignerPage() {
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Glassmorphism · White · Black · Custom
+                Subtle glassmorphism on cover + photo · White · Black · Custom
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">

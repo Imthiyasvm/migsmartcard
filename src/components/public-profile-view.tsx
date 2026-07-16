@@ -177,7 +177,7 @@ export function PublicProfileView({ profile, src }: Props) {
   const pageBg = isGlass
     ? {
         backgroundImage: profile.coverImage
-          ? `linear-gradient(180deg, rgba(15,23,42,0.55), rgba(15,23,42,0.92)), url(${profile.coverImage})`
+          ? `linear-gradient(180deg, rgba(15,23,42,0.62), rgba(10,15,31,0.93)), url(${profile.coverImage})`
           : `linear-gradient(160deg, #0f172a 0%, #312e81 45%, #0ea5e9 120%)`,
         backgroundSize: "cover",
         backgroundPosition: "center",
