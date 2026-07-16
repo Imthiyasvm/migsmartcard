@@ -1,15 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { db, ensureDbReady } from "@/lib/db";
+import { db, ensureDbReady, persistDb } from "@/lib/db";
 import { createId } from "@/lib/id";
 import bcrypt from "bcryptjs";
 import { getPlan } from "@/lib/plans";
+import { ziinaTestMode } from "@/lib/ziina";
+import { PlatformSettings } from "@/types";
 
 function omitPassword<T extends { password?: string }>(user: T) {
   const { password, ...rest } = user;
   void password;
   return rest;
+}
+
+/** Return only masked Ziina configuration metadata, never credentials. */
+function ziinaConfigView() {
+  const settings = db.settings.get();
+  const envToken = (process.env.ZIINA_API_TOKEN || "").trim();
+  const savedToken = (settings.ziinaApiToken || "").trim();
+  const envSecret = (process.env.ZIINA_WEBHOOK_SECRET || "").trim();
+  const savedSecret = (settings.ziinaWebhookSecret || "").trim();
+  const activeToken = envToken || savedToken;
+  const envTestMode = (process.env.ZIINA_TEST_MODE || "").trim();
+
+  return {
+    configured: activeToken.length > 0,
+    tokenSet: activeToken.length > 0,
+    tokenLast4: activeToken ? activeToken.slice(-4) : null,
+    tokenSource: envToken ? "env" : savedToken ? "database" : null,
+    secretSet: (envSecret || savedSecret).length > 0,
+    secretSource: envSecret ? "env" : savedSecret ? "database" : null,
+    testMode: ziinaTestMode(),
+    testModeSource: envTestMode
+      ? "env"
+      : settings.ziinaTestMode !== undefined
+        ? "database"
+        : "default",
+    webhookPath: "/api/billing/webhook",
+  };
 }
 
 async function requireAdmin() {
@@ -111,6 +140,10 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  if (resource === "ziina") {
+    return NextResponse.json(ziinaConfigView());
+  }
+
   return NextResponse.json({ error: "Unknown resource" }, { status: 400 });
 }
 
@@ -203,6 +236,42 @@ export async function POST(req: NextRequest) {
       trackingNumber: body.trackingNumber,
     });
     return NextResponse.json({ success: true, order });
+  }
+
+  if (action === "save-ziina") {
+    // Blank fields retain the saved value, so credentials are never echoed.
+    const updates: Partial<PlatformSettings> = {};
+    if (typeof body.ziinaApiToken === "string" && body.ziinaApiToken.trim()) {
+      updates.ziinaApiToken = body.ziinaApiToken.trim();
+    }
+    if (
+      typeof body.ziinaWebhookSecret === "string" &&
+      body.ziinaWebhookSecret.trim()
+    ) {
+      updates.ziinaWebhookSecret = body.ziinaWebhookSecret.trim();
+    }
+    if (typeof body.ziinaTestMode === "boolean") {
+      updates.ziinaTestMode = body.ziinaTestMode;
+    }
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { error: "Nothing to save — enter a token, secret, or change test mode" },
+        { status: 400 }
+      );
+    }
+    db.settings.update(updates);
+    await persistDb();
+    return NextResponse.json({ success: true, ziina: ziinaConfigView() });
+  }
+
+  if (action === "clear-ziina") {
+    db.settings.update({
+      ziinaApiToken: "",
+      ziinaWebhookSecret: "",
+      ziinaTestMode: undefined,
+    });
+    await persistDb();
+    return NextResponse.json({ success: true, ziina: ziinaConfigView() });
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });

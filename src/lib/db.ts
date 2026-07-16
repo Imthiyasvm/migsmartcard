@@ -11,6 +11,7 @@ import {
   Company,
   ProfileTheme,
   Payment,
+  PlatformSettings,
 } from "@/types";
 import {
   loadStoreFromRedis,
@@ -46,7 +47,13 @@ type Store = {
   nfcCards: NfcCard[];
   orders: CardOrder[];
   payments: Payment[];
+  settings: PlatformSettings;
   seeded: boolean;
+};
+
+export const DEFAULT_SETTINGS: PlatformSettings = {
+  id: "platform",
+  updatedAt: new Date(0).toISOString(),
 };
 
 declare global {
@@ -69,6 +76,7 @@ function getMemoryStore(): Store {
       nfcCards: [],
       orders: [],
       payments: [],
+      settings: { ...DEFAULT_SETTINGS },
       seeded: false,
     };
   }
@@ -84,6 +92,7 @@ const FILE_MAP: Record<keyof Omit<Store, "seeded">, string> = {
   nfcCards: "nfc-cards.json",
   orders: "orders.json",
   payments: "payments.json",
+  settings: "settings.json",
 };
 
 function ensureDataDir() {
@@ -122,7 +131,9 @@ function readCollection<K extends keyof Omit<Store, "seeded">>(
   if (IS_SERVERLESS) {
     return getMemoryStore()[key];
   }
-  return readJsonFile(FILE_MAP[key], [] as Store[K]);
+  // Array collections use an empty-array fallback; settings.get() guards the
+  // single-object settings record when its file has not been created yet.
+  return readJsonFile(FILE_MAP[key], [] as unknown as Store[K]);
 }
 
 function writeCollection<K extends keyof Omit<Store, "seeded">>(
@@ -170,6 +181,8 @@ export async function ensureDbReady(): Promise<void> {
         store.nfcCards = (remote.nfcCards as Store["nfcCards"]) || [];
         store.orders = (remote.orders as Store["orders"]) || [];
         store.payments = (remote.payments as Store["payments"]) || [];
+        store.settings =
+          (remote.settings as Store["settings"]) || { ...DEFAULT_SETTINGS };
         store.seeded = true;
       } else {
         ensureSeeded();
@@ -663,6 +676,7 @@ function buildSeedData(): Omit<Store, "seeded"> {
     nfcCards,
     orders,
     payments: [],
+    settings: { ...DEFAULT_SETTINGS, updatedAt: now },
   };
 }
 
@@ -689,6 +703,8 @@ function ensureSeeded() {
   writeJsonFile("analytics.json", seed.analytics);
   writeJsonFile("nfc-cards.json", seed.nfcCards);
   writeJsonFile("orders.json", seed.orders);
+  writeJsonFile("payments.json", seed.payments);
+  writeJsonFile("settings.json", seed.settings);
 }
 
 // Seed on module load (server-side only)
@@ -925,6 +941,28 @@ export const db = {
       };
       writeCollection("payments", payments);
       return payments[idx];
+    },
+  },
+
+  settings: {
+    get: (): PlatformSettings => {
+      const settings = readCollection("settings");
+      if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+        return { ...DEFAULT_SETTINGS };
+      }
+      return settings.id
+        ? settings
+        : { ...DEFAULT_SETTINGS, ...settings };
+    },
+    update: (data: Partial<PlatformSettings>): PlatformSettings => {
+      const next: PlatformSettings = {
+        ...db.settings.get(),
+        ...data,
+        id: "platform",
+        updatedAt: new Date().toISOString(),
+      };
+      writeCollection("settings", next);
+      return next;
     },
   },
 
