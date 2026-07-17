@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!session) redirect("/login?callbackUrl=/dashboard");
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-[#faf9f7] dark:bg-[#0a0a0a]">
       <DashboardSidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-6xl px-4 py-8 pt-16 lg:px-8 lg:pt-8">

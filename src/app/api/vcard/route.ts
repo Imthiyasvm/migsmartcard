@@ -20,6 +20,23 @@ function normalizeSocialUrl(url: string): string {
   return `https://${trimmed}`;
 }
 
+/** Generate a simple SVG avatar as a data URI for vCard when no photo is uploaded */
+function generateSvgAvatar(name: string, primaryColor: string): string {
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="${primaryColor}" rx="0"/>
+  <text x="100" y="108" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">${initials}</text>
+</svg>`;
+
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+}
+
 export async function GET(req: NextRequest) {
   await ensureDbReady();
   const { searchParams } = new URL(req.url);
@@ -55,6 +72,31 @@ export async function GET(req: NextRequest) {
     `FN:${escapeVCardText(profile.fullName || "Unknown")}`,
     `N:${escapeVCardText(familyName)};${escapeVCardText(givenName)};;;`,
   ];
+
+  // Add profile photo if available — auto-generate avatar if no photo uploaded
+  const primaryColor = profile.theme?.primaryColor || "#d4a574";
+  const photoSource = profile.profilePhoto || generateSvgAvatar(profile.fullName || "User", primaryColor);
+
+  if (photoSource.startsWith("http://") || photoSource.startsWith("https://")) {
+    lines.push(`PHOTO;VALUE=uri:${photoSource}`);
+  } else if (photoSource.startsWith("data:image/svg+xml;base64,")) {
+    // For SVG data URIs, use the URI reference format
+    lines.push(`PHOTO;VALUE=uri:${photoSource}`);
+  } else if (photoSource.startsWith("data:")) {
+    // Extract base64 portion from data URI (for PNG/JPEG uploads)
+    const base64Match = photoSource.match(/^data:image\/(jpeg|png|jpg|webp|gif);base64,(.+)$/i);
+    if (base64Match) {
+      const mediaType = base64Match[1].toUpperCase() === "JPG" ? "JPEG" : base64Match[1].toUpperCase();
+      lines.push(`PHOTO;ENCODING=b;TYPE=${mediaType}:${base64Match[2]}`);
+    }
+  } else if (photoSource.startsWith("/")) {
+    // Relative URL — construct full URL (best-effort)
+    const host = req.headers.get("host") || "";
+    const protocol = req.headers.get("x-forwarded-proto") || "https";
+    if (host) {
+      lines.push(`PHOTO;VALUE=uri:${protocol}://${host}${photoSource}`);
+    }
+  }
 
   if (profile.jobTitle) lines.push(`TITLE:${escapeVCardText(profile.jobTitle)}`);
   if (profile.companyName) lines.push(`ORG:${escapeVCardText(profile.companyName)}`);

@@ -11,17 +11,17 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#eef7ff",
-          100: "#d9ecff",
-          200: "#bcdcff",
-          300: "#8ec6ff",
-          400: "#59a5ff",
-          500: "#3381ff",
-          600: "#1a5ff5",
-          700: "#144ae1",
-          800: "#173cb6",
-          900: "#19368f",
-          950: "#142257",
+          50: "#fdf8f0",
+          100: "#f9ecda",
+          200: "#f0d5b3",
+          300: "#e4b87f",
+          400: "#d4a574",
+          500: "#c9956a",
+          600: "#b8864e",
+          700: "#9a6f3e",
+          800: "#7d5a34",
+          900: "#5e4328",
+          950: "#3a2a1a",
         },
         accent: {
           50: "#f0fdf6",
@@ -41,15 +41,17 @@ const config: Config = {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        soft: "0 4px 24px -4px rgba(20, 42, 87, 0.08)",
-        card: "0 8px 32px -8px rgba(20, 42, 87, 0.12)",
-        glow: "0 0 40px -8px rgba(26, 95, 245, 0.35)",
+        soft: "0 4px 24px -4px rgba(58, 42, 26, 0.08)",
+        card: "0 8px 32px -8px rgba(58, 42, 26, 0.12)",
+        glow: "0 0 40px -8px rgba(212, 165, 116, 0.35)",
       },
       backgroundImage: {
         "hero-gradient":
-          "radial-gradient(ellipse 80% 60% at 50% -20%, rgba(51,129,255,0.25), transparent), linear-gradient(180deg, #0b1224 0%, #142257 100%)",
+          "radial-gradient(ellipse 80% 60% at 50% -20%, rgba(212,165,116,0.25), transparent), linear-gradient(180deg, #0a0a0a 0%, #1a1208 100%)",
         "card-shine":
           "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%)",
+        "premium-gradient":
+          "linear-gradient(135deg, #0a0a0a 0%, #1a1208 50%, #2a1f0a 100%)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-out",

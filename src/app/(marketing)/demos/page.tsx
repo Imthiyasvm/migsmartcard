@@ -3,7 +3,7 @@ import { DEMO_PROFILES } from "@/lib/demo-profiles";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata = {
-  title: "Demo Cards",
+  title: "Demo Profiles",
   description: "Preview Classic, Glass, and Premium MigSmartCard templates.",
 };
 
@@ -24,7 +24,7 @@ export default function DemosPage() {
           Minimal. Premium. Live.
         </h1>
         <p className="mt-3 text-slate-500">
-          Three polished demo profiles. Open any card to experience the full
+          Three polished demo profiles. Open any profile to experience the full
           digital experience.
         </p>
       </div>
@@ -37,7 +37,7 @@ export default function DemosPage() {
             <Link
               key={slug}
               href={`/p/${slug}`}
-              className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft transition hover:-translate-y-1 hover:shadow-card dark:border-slate-800 dark:bg-slate-900"
+              className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft transition hover:-translate-y-1 hover:shadow-card dark:border-[#1a1a1a] dark:bg-[#111]"
             >
               <div
                 className="relative h-32 bg-cover bg-center"
@@ -48,7 +48,7 @@ export default function DemosPage() {
                 </span>
               </div>
               <div className="-mt-11 flex flex-col items-center px-4 pb-7">
-                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#E8E6E3] shadow-lg ring-1 ring-black/5 dark:border-slate-900">
+                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#E8E6E3] shadow-lg ring-1 ring-black/5 dark:border-[#1a1a1a]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={p.profilePhoto}
@@ -68,7 +68,7 @@ export default function DemosPage() {
                   {meta.style}
                 </p>
                 <span className="mt-4 text-xs font-semibold text-brand-600">
-                  Open live card →
+                  Open live profile →
                 </span>
               </div>
             </Link>

@@ -169,8 +169,8 @@ export function PublicProfileView({ profile, src }: Props) {
     isGlass
       ? "border border-white/20 bg-white/10 backdrop-blur-xl"
       : isPremium
-        ? "border border-amber-500/20 bg-zinc-900/80"
-        : "bg-white dark:bg-slate-900",
+        ? "border border-brand-500/20 bg-zinc-900/80"
+        : "bg-white dark:bg-[#141414]",
     radius
   );
 

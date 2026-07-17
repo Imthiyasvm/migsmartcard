@@ -12,6 +12,8 @@ import {
   QrCode,
   ArrowRight,
   TrendingUp,
+  Crown,
+  Lock,
 } from "lucide-react";
 import {
   Card,
@@ -23,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatNumber, formatDateTime } from "@/lib/utils";
+import { canUseFeature } from "@/lib/plans";
 import {
   AreaChart,
   Area,
@@ -45,6 +48,9 @@ interface AnalyticsSummary {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const planId = session?.user?.plan || "free";
+  const isProPlus = canUseFeature(planId, "analytics");
+
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [daily, setDaily] = useState<{ date: string; views: number }[]>([]);
   const [leads, setLeads] = useState<
@@ -113,6 +119,104 @@ export default function DashboardPage() {
     },
   ];
 
+  // Free user: grayed out overview with upgrade prompt
+  if (!isProPlus) {
+    return (
+      <div className="space-y-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight">
+              Welcome back, {session?.user?.name?.split(" ")[0]}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Here&apos;s how your digital profile is performing
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {profile && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/p/${profile.slug}`} target="_blank">
+                  <ExternalLink className="h-4 w-4" /> View Profile
+                </Link>
+              </Button>
+            )}
+            <Button size="sm" asChild>
+              <Link href="/dashboard/profile">Edit Profile</Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Grayed out content overlay */}
+        <div className="relative">
+          {/* Blurred / grayed out stats grid */}
+          <div className="pointer-events-none select-none opacity-30 grayscale">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {stats.map((s) => (
+                <Card key={s.label}>
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${s.color}`}
+                    >
+                      <s.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-500">{s.label}</p>
+                      <p className="text-2xl font-bold">{formatNumber(s.value)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Blurred chart */}
+            <div className="mt-6 grid gap-6 lg:grid-cols-3">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Views (Last 30 Days)</CardTitle>
+                  <CardDescription>Profile views, NFC taps & QR scans</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 flex items-center justify-center text-sm text-slate-400">
+                    Analytics data
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Leads</CardTitle>
+                  <CardDescription>Latest contact exchanges</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="py-8 text-center text-sm text-slate-400">Lead data</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Upgrade overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="mx-auto max-w-md rounded-2xl border border-brand-200 bg-white/95 p-8 text-center shadow-glow backdrop-blur-sm dark:border-brand-800 dark:bg-[#141414]/95">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-950">
+                <Lock className="h-8 w-8 text-brand-600" />
+              </div>
+              <h2 className="font-display text-xl font-bold">
+                Overview is a Pro+ Feature
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Unlock your analytics dashboard, lead tracking, and detailed profile insights with a Pro plan or higher.
+              </p>
+              <Button className="mt-6" size="lg" asChild>
+                <Link href="/dashboard/billing">
+                  <Crown className="h-4 w-4" /> Upgrade to Pro
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -121,14 +225,14 @@ export default function DashboardPage() {
             Welcome back, {session?.user?.name?.split(" ")[0]}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Here&apos;s how your digital card is performing
+            Here&apos;s how your digital profile is performing
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {profile && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/p/${profile.slug}`} target="_blank">
-                <ExternalLink className="h-4 w-4" /> View Card
+                <ExternalLink className="h-4 w-4" /> View Profile
               </Link>
             </Button>
           )}
@@ -171,8 +275,8 @@ export default function DashboardPage() {
                   <AreaChart data={daily}>
                     <defs>
                       <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#1a5ff5" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="#1a5ff5" stopOpacity={0} />
+                        <stop offset="5%" stopColor="#d4a574" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#d4a574" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
@@ -193,7 +297,7 @@ export default function DashboardPage() {
                     <Area
                       type="monotone"
                       dataKey="views"
-                      stroke="#1a5ff5"
+                      stroke="#d4a574"
                       fill="url(#colorViews)"
                       strokeWidth={2}
                     />
@@ -223,13 +327,13 @@ export default function DashboardPage() {
           <CardContent className="space-y-3">
             {leads.length === 0 && (
               <p className="py-8 text-center text-sm text-slate-400">
-                No leads yet. Share your card!
+                No leads yet. Share your profile!
               </p>
             )}
             {leads.map((lead) => (
               <div
                 key={lead.id}
-                className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/50"
+                className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-[#141414]"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
                   {lead.name
@@ -276,7 +380,7 @@ export default function DashboardPage() {
             <CardContent className="flex items-center gap-4 p-5">
               <Nfc className="h-8 w-8 text-brand-600" />
               <div>
-                <p className="font-semibold">Order Cards</p>
+                <p className="font-semibold">Order NFC Card</p>
                 <p className="text-xs text-slate-500">Physical NFC smart cards</p>
               </div>
             </CardContent>

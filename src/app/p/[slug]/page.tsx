@@ -23,7 +23,7 @@ export async function generateMetadata({
     const data = decodeShareToken(searchParams.d);
     if (data) {
       return {
-        title: `${data.fullName} — ${data.jobTitle || "Digital Card"}`,
+        title: `${data.fullName} — ${data.jobTitle || "Digital Profile"}`,
         description: data.bio || `Connect with ${data.fullName}`,
       };
     }
@@ -33,7 +33,7 @@ export async function generateMetadata({
   if (!profile) return { title: "Profile Not Found" };
 
   return {
-    title: `${profile.fullName} — ${profile.jobTitle || "Digital Card"}`,
+    title: `${profile.fullName} — ${profile.jobTitle || "Digital Profile"}`,
     description:
       profile.bio ||
       `Connect with ${profile.fullName}${profile.companyName ? ` at ${profile.companyName}` : ""}`,
@@ -71,16 +71,16 @@ export default async function PublicProfilePage({
   // Helpful not-found for short /p/slug when Redis is off
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
-      <p className="text-sm font-semibold text-brand-600">Card not found</p>
+      <p className="text-sm font-semibold text-brand-600">Profile not found</p>
       <h1 className="mt-2 text-2xl font-bold">
         This short link is unavailable
       </h1>
       <p className="mt-3 max-w-lg text-sm text-slate-500">
         Short URLs like{" "}
         <code className="rounded bg-slate-100 px-1">/p/{params.slug}</code> need
-        Redis on Vercel so every server can load your saved card.
+        Redis on Vercel so every server can load your saved profile.
         {isRedisEnabled()
-          ? " Redis is enabled, but this slug was not found — save the card again from the dashboard."
+          ? " Redis is enabled, but this slug was not found — save the profile again from the dashboard."
           : " Redis is not configured on this deployment."}
       </p>
       <div className="mt-6 max-w-md space-y-2 text-left text-sm text-slate-600">
@@ -88,12 +88,12 @@ export default async function PublicProfilePage({
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <Link className="text-brand-600 underline" href="/dashboard/preview">
-              Dashboard → Card Preview
+              Dashboard → Profile Preview
             </Link>{" "}
             (while logged in)
           </li>
           <li>
-            <strong>Copy share link</strong> from My Card (long{" "}
+            <strong>Copy share link</strong> from My Profile (long{" "}
             <code className="rounded bg-slate-100 px-1">/c/...</code> link —
             works for anyone, no Redis)
           </li>
@@ -110,7 +110,7 @@ export default async function PublicProfilePage({
           href="/dashboard/profile"
           className="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white"
         >
-          Open My Card
+          Open My Profile
         </Link>
         <Link
           href="/dashboard/preview"

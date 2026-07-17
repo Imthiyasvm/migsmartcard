@@ -31,14 +31,14 @@ import { Badge } from "@/components/ui/badge";
 
 const userNav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/profile", label: "My Card", icon: User },
-  { href: "/dashboard/preview", label: "Card Preview", icon: Eye },
+  { href: "/dashboard/profile", label: "My Profile", icon: User },
+  { href: "/dashboard/preview", label: "Profile Preview", icon: Eye },
   { href: "/dashboard/qr", label: "QR & NFC", icon: QrCode },
   { href: "/dashboard/business-card", label: "Print Card", icon: IdCard },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/leads", label: "Leads", icon: Users },
   { href: "/dashboard/email-signature", label: "Email Signature", icon: Mail },
-  { href: "/dashboard/shop", label: "Order Cards", icon: ShoppingBag },
+  { href: "/dashboard/shop", label: "Order NFC Card", icon: ShoppingBag },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -102,15 +102,15 @@ export function DashboardSidebar() {
   const sidebar = (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950",
+        "flex h-full flex-col border-r border-slate-200 bg-white dark:border-[#1a1a1a] dark:bg-[#0a0a0a]",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
-      <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
+      <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 dark:border-[#1a1a1a]">
         {!collapsed ? <Logo href="/dashboard" /> : <Logo showText={false} href="/dashboard" />}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 lg:block"
+          className="hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] lg:block"
         >
           <ChevronLeft
             className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")}
@@ -155,11 +155,11 @@ export function DashboardSidebar() {
         )}
       </nav>
 
-      <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+      <div className="border-t border-slate-200 p-3 dark:border-[#1a1a1a]">
         {session?.user && (
           <div
             className={cn(
-              "mb-2 flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-900",
+              "mb-2 flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-[#141414]",
               collapsed && "justify-center p-2"
             )}
           >
@@ -197,7 +197,7 @@ export function DashboardSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-40 rounded-xl border border-slate-200 bg-white p-2 shadow-soft lg:hidden dark:border-slate-700 dark:bg-slate-900"
+        className="fixed left-4 top-4 z-40 rounded-xl border border-slate-200 bg-white p-2 shadow-soft lg:hidden dark:border-[#1a1a1a] dark:bg-[#0a0a0a]"
       >
         <Menu className="h-5 w-5" />
       </button>

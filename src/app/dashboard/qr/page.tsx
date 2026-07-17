@@ -50,7 +50,7 @@ export default function QrNfcPage() {
       <div>
         <h1 className="font-display text-2xl font-bold">QR Code & NFC</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Share your digital card via QR codes and NFC smart cards
+          Share your digital profile via QR codes and NFC smart cards
         </p>
       </div>
 

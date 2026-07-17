@@ -13,6 +13,8 @@ export interface CardTemplate {
   layout: "classic" | "glass" | "premium";
 }
 
+/** Profile templates — Classic (free), Glass & Premium (Pro+) */
+
 export const CARD_TEMPLATES: CardTemplate[] = [
   {
     id: "default",
