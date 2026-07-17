@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 :root {
+  --background: #0a0a0a;
+  --foreground: #f5e6d3;
+}
+
+.light {
   --background: #faf9f7;
   --foreground: #1a1a1a;
 }
@@ -25,6 +30,27 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Animation delay utilities */
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+  .animate-delay-600 { animation-delay: 600ms; }
+  .animate-delay-700 { animation-delay: 700ms; }
+  .animate-delay-800 { animation-delay: 800ms; }
+  .animate-delay-1000 { animation-delay: 1000ms; }
+  
+  /* Entrance animations start invisible */
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-slide-down,
+  .animate-slide-left,
+  .animate-slide-right,
+  .animate-scale-in {
+    opacity: 0;
   }
 }
 
@@ -59,4 +85,39 @@ body {
 
 .premium-gradient {
   background: linear-gradient(135deg, #d4a574 0%, #c9956a 50%, #b8864e 100%);
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(212, 165, 116, 0.25);
+}
+
+/* Gradient text animation */
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Focus visible for accessibility */
+.focus-visible-ring:focus-visible {
+  outline: none;
+  ring: 2px;
+  ring-offset: 2px;
+  ring-color: #d4a574;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
