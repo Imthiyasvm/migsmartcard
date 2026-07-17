@@ -25,7 +25,7 @@ const AvatarImage = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
-    className={cn("aspect-square h-full w-full object-cover object-[center_12%]", className)}
+    className={cn("aspect-square h-full w-full object-cover", className)}
     {...props}
   />
 ));
@@ -38,7 +38,7 @@ const AvatarFallback = React.forwardRef<
   <AvatarPrimitive.Fallback
     ref={ref}
     className={cn(
-      "flex h-full w-full items-center justify-center rounded-[inherit] bg-brand-100 text-sm font-semibold text-brand-700 dark:bg-brand-900 dark:text-brand-300",
+      "flex h-full w-full items-center justify-center rounded-[inherit] bg-brand-100 text-sm font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300",
       className
     )}
     {...props}
@@ -55,9 +55,12 @@ export function UserAvatar({
   src?: string | null;
   className?: string;
 }) {
+  // Ensure src is valid — skip data URIs that might be too long or empty strings
+  const validSrc = src && src.trim() !== "" ? src : undefined;
+
   return (
     <Avatar className={className}>
-      {src && <AvatarImage src={src} alt={name} />}
+      {validSrc && <AvatarImage src={validSrc} alt={name} />}
       <AvatarFallback>{getInitials(name || "U")}</AvatarFallback>
     </Avatar>
   );

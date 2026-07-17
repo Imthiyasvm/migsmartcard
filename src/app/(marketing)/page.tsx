@@ -97,8 +97,8 @@ export default function HomePage() {
               <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
                 Your Digital
                 <br />
-                <span className="bg-gradient-to-r from-brand-300 to-accent-400 bg-clip-text text-transparent">
-                  Business Card
+                <span className="bg-gradient-to-r from-brand-300 to-brand-400 bg-clip-text text-transparent">
+                  Business Profile
                 </span>
                 <br />
                 Reimagined
@@ -109,9 +109,9 @@ export default function HomePage() {
                 analytics.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button size="xl" asChild className="bg-white text-brand-700 hover:bg-slate-100">
+                <Button size="xl" asChild className="bg-white text-brand-800 hover:bg-slate-100">
                   <Link href="/register">
-                    Create Free Card <ArrowRight className="h-4 w-4" />
+                    Create Free Profile <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button
@@ -125,13 +125,13 @@ export default function HomePage() {
               </div>
               <div className="mt-8 flex items-center gap-6 text-sm text-slate-400">
                 <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-accent-400" /> Free forever plan
+                  <Check className="h-4 w-4 text-brand-400" /> Free forever plan
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-accent-400" /> No app needed
+                  <Check className="h-4 w-4 text-brand-400" /> No app needed
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-accent-400" /> Works on any phone
+                  <Check className="h-4 w-4 text-brand-400" /> Works on any phone
                 </span>
               </div>
             </div>
@@ -178,14 +178,14 @@ export default function HomePage() {
                 </div>
               </div>
               {/* Floating badges */}
-              <div className="absolute -left-4 top-16 rounded-xl bg-white px-3 py-2 shadow-card dark:bg-slate-800">
+              <div className="absolute -left-4 top-16 rounded-xl bg-white px-3 py-2 shadow-card dark:bg-[#141414]">
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
                   <Nfc className="h-4 w-4 text-brand-600" /> NFC Ready
                 </div>
               </div>
-              <div className="absolute -right-2 bottom-24 rounded-xl bg-white px-3 py-2 shadow-card dark:bg-slate-800">
+              <div className="absolute -right-2 bottom-24 rounded-xl bg-white px-3 py-2 shadow-card dark:bg-[#141414]">
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  <BarChart3 className="h-4 w-4 text-accent-600" /> 2.4K views
+                  <BarChart3 className="h-4 w-4 text-brand-600" /> 2.4K views
                 </div>
               </div>
             </div>
@@ -194,7 +194,7 @@ export default function HomePage() {
       </section>
 
       {/* Logos / trust */}
-      <section className="border-b border-slate-200 bg-slate-50 py-10 dark:border-slate-800 dark:bg-slate-900/50">
+      <section className="border-b border-slate-200 bg-[#faf9f7] py-10 dark:border-[#1a1a1a] dark:bg-[#0a0a0a]">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
           <p className="text-sm font-medium text-slate-500">
             Trusted by professionals at leading companies worldwide
@@ -215,8 +215,8 @@ export default function HomePage() {
       </section>
 
 
-      {/* Demo cards */}
-      <section id="demos" className="border-b border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-950">
+      {/* Demo profiles */}
+      <section id="demos" className="border-b border-slate-200 bg-white py-16 dark:border-[#1a1a1a] dark:bg-[#0a0a0a]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <Badge variant="default" className="mb-4">Live demos</Badge>
@@ -224,7 +224,7 @@ export default function HomePage() {
               Minimal. Premium. Live.
             </h2>
             <p className="mt-3 text-slate-500">
-              Three demo profiles — Classic, Glass, and Premium. Open any card to experience the full digital profile.
+              Three demo profiles — Classic, Glass, and Premium. Open any profile to experience the full digital experience.
             </p>
           </div>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -257,7 +257,7 @@ export default function HomePage() {
               <Link
                 key={d.href}
                 href={d.href}
-                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft transition hover:-translate-y-1 hover:shadow-card dark:border-slate-800 dark:bg-slate-900"
+                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft transition hover:-translate-y-1 hover:shadow-card dark:border-[#1a1a1a] dark:bg-[#111]"
               >
                 <div
                   className="relative h-28 bg-cover bg-center"
@@ -268,7 +268,7 @@ export default function HomePage() {
                   </span>
                 </div>
                 <div className="relative z-10 -mt-12 flex flex-col items-center px-4 pb-6">
-                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#E8E6E3] shadow-lg ring-1 ring-black/5 dark:border-slate-900">
+                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#E8E6E3] shadow-lg ring-1 ring-black/5 dark:border-[#1a1a1a]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={d.img}
@@ -280,7 +280,7 @@ export default function HomePage() {
                   </div>
                   <h3 className="mt-3 font-bold group-hover:text-brand-600">{d.name}</h3>
                   <p className="text-xs text-slate-500">{d.role}</p>
-                  <span className="mt-3 text-xs font-semibold text-brand-600">Open live card →</span>
+                  <span className="mt-3 text-xs font-semibold text-brand-600">Open live profile →</span>
                 </div>
               </Link>
             ))}
@@ -289,7 +289,7 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 sm:py-28">
+      <section id="features" className="py-20 sm:py-28 bg-[#faf9f7] dark:bg-[#0d0d0d]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <Badge variant="default" className="mb-4">
@@ -307,7 +307,7 @@ export default function HomePage() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-soft transition hover:border-brand-200 hover:shadow-card dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-800"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-soft transition hover:border-brand-200 hover:shadow-card dark:border-[#1a1a1a] dark:bg-[#111] dark:hover:border-brand-800"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white dark:bg-brand-950">
                   <f.icon className="h-6 w-6" />
@@ -325,7 +325,7 @@ export default function HomePage() {
       {/* How it works */}
       <section
         id="how-it-works"
-        className="border-y border-slate-200 bg-slate-50 py-20 dark:border-slate-800 dark:bg-slate-900/40 sm:py-28"
+        className="border-y border-slate-200 bg-white py-20 dark:border-[#1a1a1a] dark:bg-[#0a0a0a] sm:py-28"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -356,7 +356,7 @@ export default function HomePage() {
       </section>
 
       {/* Channels */}
-      <section className="py-20 sm:py-28">
+      <section className="py-20 sm:py-28 bg-[#faf9f7] dark:bg-[#0d0d0d]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div>
@@ -397,11 +397,11 @@ export default function HomePage() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900"
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft dark:border-[#1a1a1a] dark:bg-[#111]"
                 >
                   <p className="text-xs font-medium text-slate-500">{stat.label}</p>
                   <p className="mt-1 text-2xl font-bold">{stat.value}</p>
-                  <p className="mt-1 text-xs font-semibold text-accent-600">
+                  <p className="mt-1 text-xs font-semibold text-brand-600">
                     {stat.change} this month
                   </p>
                 </div>
@@ -414,7 +414,7 @@ export default function HomePage() {
       {/* Pricing */}
       <section
         id="pricing"
-        className="border-t border-slate-200 bg-slate-50 py-20 dark:border-slate-800 dark:bg-slate-900/40 sm:py-28"
+        className="border-t border-slate-200 bg-white py-20 dark:border-[#1a1a1a] dark:bg-[#0a0a0a] sm:py-28"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -432,10 +432,10 @@ export default function HomePage() {
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-soft dark:bg-slate-900 ${
+                className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-soft dark:bg-[#111] ${
                   plan.popular
                     ? "border-brand-500 shadow-glow ring-1 ring-brand-500"
-                    : "border-slate-200 dark:border-slate-800"
+                    : "border-slate-200 dark:border-[#1a1a1a]"
                 }`}
               >
                 {plan.popular && (
@@ -457,7 +457,7 @@ export default function HomePage() {
                 <ul className="mt-6 flex-1 space-y-2.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
                       <span className="text-slate-600 dark:text-slate-300">{f}</span>
                     </li>
                   ))}
@@ -478,7 +478,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 sm:py-28">
+      <section className="py-20 sm:py-28 bg-[#faf9f7] dark:bg-[#0d0d0d]">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
             Ready to connect smarter?
@@ -490,7 +490,7 @@ export default function HomePage() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button size="xl" asChild>
               <Link href="/register">
-                Create Your Free Card <ArrowRight className="h-4 w-4" />
+                Create Your Free Profile <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button size="xl" variant="outline" asChild>

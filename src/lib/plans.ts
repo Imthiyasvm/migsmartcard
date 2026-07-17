@@ -6,9 +6,9 @@ export const PLANS: SubscriptionPlan[] = [
     name: "Free",
     price: 0,
     priceYearly: 0,
-    description: "Get started with a basic digital card",
+    description: "Get started with a basic digital profile",
     features: [
-      "1 digital card",
+      "1 digital profile",
       "Up to 5 custom links",
       "Basic QR code",
       "vCard download",
@@ -37,7 +37,7 @@ export const PLANS: SubscriptionPlan[] = [
     priceYearly: 120,
     description: "For professionals who want more",
     features: [
-      "Up to 5 digital cards",
+      "Up to 5 digital profiles",
       "Unlimited custom links",
       "Printable business card designer",
       "Portrait & landscape layouts",
@@ -71,7 +71,7 @@ export const PLANS: SubscriptionPlan[] = [
     priceYearly: 390,
     description: "For teams and growing companies",
     features: [
-      "Up to 25 digital cards",
+      "Up to 25 digital profiles",
       "Everything in Pro",
       "Business card designer",
       "Up to 25 team members",
@@ -103,7 +103,7 @@ export const PLANS: SubscriptionPlan[] = [
     priceYearly: 990,
     description: "For large organizations",
     features: [
-      "Unlimited digital cards",
+      "Unlimited digital profiles",
       "Everything in Business",
       "Business card designer",
       "Unlimited team members",

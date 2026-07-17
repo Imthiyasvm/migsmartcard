@@ -18,15 +18,15 @@ export default async function OwnerPreviewPage() {
   if (!profile) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <h1 className="text-xl font-bold">No card yet</h1>
+        <h1 className="text-xl font-bold">No profile yet</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Create your digital card first, then preview it here.
+          Create your digital profile first, then preview it here.
         </p>
         <Link
           href="/dashboard/profile"
           className="mt-6 inline-block rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white"
         >
-          Edit My Card
+          Edit My Profile
         </Link>
       </div>
     );

@@ -24,7 +24,7 @@ const navLinks = [
   { href: "/#pricing", label: "Pricing" },
   { href: "/#how-it-works", label: "How it Works" },
   { href: "/shop", label: "Shop Cards" },
-  { href: "/#demos", label: "Demo Cards" },
+  { href: "/#demos", label: "Demo Profiles" },
 ];
 
 export function Navbar() {
@@ -34,7 +34,7 @@ export function Navbar() {
   const [userMenu, setUserMenu] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-950/80">
+    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl dark:border-[#1a1a1a]/60 dark:bg-[#0a0a0a]/80">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
 
@@ -43,7 +43,7 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#1a1a1a] dark:hover:text-white"
             >
               {link.label}
             </Link>
@@ -53,7 +53,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <button
             onClick={toggleTheme}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-[#1a1a1a]"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? (
@@ -67,7 +67,7 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setUserMenu(!userMenu)}
-                className="flex items-center gap-2 rounded-xl p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="flex items-center gap-2 rounded-xl p-1.5 hover:bg-slate-100 dark:hover:bg-[#1a1a1a]"
               >
                 <UserAvatar
                   name={session.user.name}
@@ -84,8 +84,8 @@ export function Navbar() {
                     className="fixed inset-0 z-40"
                     onClick={() => setUserMenu(false)}
                   />
-                  <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-card dark:border-slate-700 dark:bg-slate-900">
-                    <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                  <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-card dark:border-[#1a1a1a] dark:bg-[#141414]">
+                    <div className="border-b border-slate-100 px-4 py-3 dark:border-[#1a1a1a]">
                       <p className="text-sm font-semibold">{session.user.name}</p>
                       <p className="text-xs text-slate-500">
                         {session.user.email}
@@ -93,21 +93,21 @@ export function Navbar() {
                     </div>
                     <Link
                       href="/dashboard"
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
                       onClick={() => setUserMenu(false)}
                     >
                       <LayoutDashboard className="h-4 w-4" /> Dashboard
                     </Link>
                     <Link
                       href="/dashboard/profile"
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
                       onClick={() => setUserMenu(false)}
                     >
                       <User className="h-4 w-4" /> Edit Profile
                     </Link>
                     <Link
                       href="/dashboard/billing"
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
                       onClick={() => setUserMenu(false)}
                     >
                       <CreditCard className="h-4 w-4" /> Billing
@@ -115,7 +115,7 @@ export function Navbar() {
                     {session.user.role === "admin" && (
                       <Link
                         href="/admin"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
                         onClick={() => setUserMenu(false)}
                       >
                         <LayoutDashboard className="h-4 w-4" /> Admin Panel
@@ -155,7 +155,7 @@ export function Navbar() {
       {/* Mobile menu */}
       <div
         className={cn(
-          "border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 md:hidden",
+          "border-t border-slate-200 bg-white dark:border-[#1a1a1a] dark:bg-[#0a0a0a] md:hidden",
           open ? "block" : "hidden"
         )}
       >
@@ -164,7 +164,7 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-[#1a1a1a]"
               onClick={() => setOpen(false)}
             >
               {link.label}

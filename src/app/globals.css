@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #faf9f7;
+  --foreground: #1a1a1a;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #f1f5f9;
+  --background: #0a0a0a;
+  --foreground: #f5e6d3;
 }
 
 html {
@@ -37,11 +37,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d4a574;
   border-radius: 4px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #8b7355;
 }
 
 /* Subtle glassmorphism helpers (used in 2-image glass card designs) */
@@ -50,4 +50,13 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* Premium gold accent utilities */
+.premium-glow {
+  box-shadow: 0 0 40px -8px rgba(212, 165, 116, 0.35);
+}
+
+.premium-gradient {
+  background: linear-gradient(135deg, #d4a574 0%, #c9956a 50%, #b8864e 100%);
 }

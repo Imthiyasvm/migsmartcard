@@ -68,7 +68,7 @@ export default function LeadsPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Leads</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Contacts captured from your digital card
+            Contacts captured from your digital profile
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={exportCsv} disabled={!leads.length}>

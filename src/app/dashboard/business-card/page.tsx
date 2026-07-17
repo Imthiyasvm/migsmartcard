@@ -507,20 +507,58 @@ export default function BusinessCardDesignerPage() {
   }
 
   if (!allowed) {
+    // Free users: show templates view but gray out creating
     return (
-      <div className="mx-auto max-w-lg py-16 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-          <Crown className="h-7 w-7" />
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-2xl font-bold">Print Card</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Preview business card templates — upgrade to Pro to create and download
+          </p>
         </div>
-        <h1 className="font-display text-2xl font-bold">
-          Premium business cards
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Glassmorphism 2-image cards, White, Black, or Custom layouts with large photo, QR, and text style controls. Pro and above.
-        </p>
-        <Button className="mt-6" asChild>
-          <Link href="/dashboard/billing">Upgrade plan</Link>
-        </Button>
+
+        {/* Template preview cards for free users */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {(Object.keys(STYLES) as StyleId[]).map((id) => (
+            <div
+              key={id}
+              className="relative overflow-hidden rounded-2xl border border-slate-200 p-6 dark:border-slate-700"
+            >
+              <div
+                className="mb-4 flex h-32 items-center justify-center rounded-xl text-center"
+                style={{
+                  background: `linear-gradient(135deg, ${STYLES[id].bg0}, ${STYLES[id].bg1})`,
+                  color: STYLES[id].fg,
+                }}
+              >
+                <div>
+                  <p className="text-lg font-bold">{STYLES[id].name}</p>
+                  <p className="text-xs opacity-70 mt-1">Template Preview</p>
+                </div>
+              </div>
+              <p className="text-sm font-semibold">{STYLES[id].name}</p>
+              <p className="text-xs text-slate-500 mt-1">Pro+ required to create</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Upgrade prompt overlay */}
+        <div className="rounded-2xl border border-brand-200 bg-white/95 p-8 text-center shadow-glow dark:border-brand-800 dark:bg-[#141414]/95">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-950">
+            <Crown className="h-7 w-7" />
+          </div>
+          <h2 className="font-display text-xl font-bold">
+            Upgrade to Create Business Cards
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Glassmorphism 2-image cards, White, Black, or Custom layouts with large photo, QR, and text style controls. Pro and above.
+          </p>
+          <Button className="mt-6" asChild>
+            <Link href="/dashboard/billing">
+              <Crown className="h-4 w-4" /> Upgrade to Pro
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -528,9 +566,9 @@ export default function BusinessCardDesignerPage() {
   if (!profile) {
     return (
       <div className="py-16 text-center text-slate-500">
-        Create a digital card first.{" "}
+        Create a digital profile first.{" "}
         <Link href="/dashboard/profile" className="text-brand-600 underline">
-          My Card
+          My Profile
         </Link>
       </div>
     );

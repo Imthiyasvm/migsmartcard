@@ -75,7 +75,7 @@ export default function ProfileEditorPage() {
   useEffect(() => {
     setOrigin(window.location.origin);
     load()
-      .catch(() => setMessage("Failed to load cards"))
+      .catch(() => setMessage("Failed to load profiles"))
       .finally(() => setLoading(false));
   }, [load]);
 
@@ -179,7 +179,7 @@ export default function ProfileEditorPage() {
         setMessage(
           data.warning
             ? "Saved. Use Copy share link (works without Redis). Short /p/ links need Redis."
-            : "Card saved successfully!"
+            : "Profile saved successfully!"
         );
         if (openPublic) {
           // Always open working share link if available
@@ -208,7 +208,7 @@ export default function ProfileEditorPage() {
   const createCard = async () => {
     if (profiles.length >= maxCards) {
       setMessage(
-        `Your ${planName} plan allows ${maxCards} card${maxCards === 1 ? "" : "s"}. Upgrade to create more.`
+        `Your ${planName} plan allows ${maxCards} profile${maxCards === 1 ? "" : "s"}. Upgrade to create more.`
       );
       return;
     }
@@ -219,23 +219,23 @@ export default function ProfileEditorPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cardName: `Card ${profiles.length + 1}`,
+          cardName: `Profile ${profiles.length + 1}`,
           fullName: profile?.fullName || "",
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Could not create card");
+        setMessage(data.error || "Could not create profile");
         if (data.upgrade) {
           // leave message as is
         }
       } else {
         setProfiles(data.profiles || []);
         setProfile(data.profile);
-        setMessage("New card created — customize it below.");
+        setMessage("New profile created — customize it below.");
       }
     } catch {
-      setMessage("Could not create card");
+      setMessage("Could not create profile");
     }
     setCreating(false);
     setTimeout(() => setMessage(""), 5000);
@@ -243,10 +243,10 @@ export default function ProfileEditorPage() {
 
   const deleteCard = async (id: string) => {
     if (profiles.length <= 1) {
-      setMessage("You must keep at least one card");
+      setMessage("You must keep at least one profile");
       return;
     }
-    if (!confirm("Delete this card permanently?")) return;
+    if (!confirm("Delete this profile permanently?")) return;
     const res = await fetch(`/api/profile?id=${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
@@ -255,7 +255,7 @@ export default function ProfileEditorPage() {
     }
     setProfiles(data.profiles || []);
     setProfile(data.profiles?.[0] || null);
-    setMessage("Card deleted");
+    setMessage("Profile deleted");
   };
 
   const setPrimary = async () => {
@@ -270,7 +270,7 @@ export default function ProfileEditorPage() {
     if (res.ok) {
       setProfile(data.profile);
       setProfiles(data.profiles || []);
-      setMessage("Set as primary card");
+      setMessage("Set as primary profile");
     }
     setSaving(false);
   };
@@ -301,7 +301,7 @@ export default function ProfileEditorPage() {
       }
     }
     if (!url) {
-      setMessage("Could not create share link — save the card first");
+      setMessage("Could not create share link — save the profile first");
       return;
     }
     await navigator.clipboard.writeText(url);
@@ -313,7 +313,7 @@ export default function ProfileEditorPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center text-slate-400">
-        Loading cards...
+        Loading profiles...
       </div>
     );
   }
@@ -321,9 +321,9 @@ export default function ProfileEditorPage() {
   if (!profile) {
     return (
       <div className="py-16 text-center">
-        <p className="text-slate-500">No cards found</p>
+        <p className="text-slate-500">No profiles found</p>
         <Button className="mt-4" onClick={createCard}>
-          Create card
+          Create Profile
         </Button>
       </div>
     );
@@ -336,9 +336,9 @@ export default function ProfileEditorPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold">My Digital Cards</h1>
+          <h1 className="font-display text-2xl font-bold">My Digital Profiles</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {profiles.length} of {maxCards} card{maxCards === 1 ? "" : "s"} on{" "}
+            {profiles.length} of {maxCards} profile{maxCards === 1 ? "" : "s"} on{" "}
             <Badge className="align-middle capitalize">{planName}</Badge>
           </p>
         </div>
@@ -381,10 +381,10 @@ export default function ProfileEditorPage() {
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <CreditCard className="h-4 w-4 text-brand-600" /> Your cards
+              <CreditCard className="h-4 w-4 text-brand-600" /> Your profiles
             </CardTitle>
             <CardDescription>
-              Free = 1 card · Pro = 5 · Business = 25 · Enterprise = unlimited
+              Free = 1 profile · Pro = 5 · Business = 25 · Enterprise = unlimited
             </CardDescription>
           </div>
           <Button
@@ -392,9 +392,9 @@ export default function ProfileEditorPage() {
             onClick={createCard}
             loading={creating}
             disabled={atLimit}
-            title={atLimit ? "Upgrade your plan for more cards" : "Create another card"}
+            title={atLimit ? "Upgrade your plan for more profiles" : "Create another profile"}
           >
-            <Plus className="h-4 w-4" /> New Card
+            <Plus className="h-4 w-4" /> New Profile
           </Button>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
@@ -489,7 +489,7 @@ export default function ProfileEditorPage() {
             className="text-red-600"
             onClick={() => deleteCard(profile.id)}
           >
-            <Trash2 className="h-4 w-4" /> Delete this card
+            <Trash2 className="h-4 w-4" /> Delete this profile
           </Button>
         )}
       </div>
@@ -498,7 +498,7 @@ export default function ProfileEditorPage() {
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="templates">Profile Template</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="social">Social & Links</TabsTrigger>
           <TabsTrigger value="theme">Theme</TabsTrigger>
@@ -508,11 +508,11 @@ export default function ProfileEditorPage() {
           <Card>
             <CardHeader>
               <CardTitle>Identity</CardTitle>
-              <CardDescription>How this card appears publicly</CardDescription>
+              <CardDescription>How this profile appears publicly</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <Input
-                label="Card name (internal)"
+                label="Profile name (internal)"
                 value={profile.cardName || ""}
                 onChange={(e) => update("cardName", e.target.value)}
                 placeholder="Work, Personal, Sales..."
@@ -706,7 +706,7 @@ export default function ProfileEditorPage() {
         <TabsContent value="templates" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Card templates</CardTitle>
+              <CardTitle>Profile Templates</CardTitle>
               <CardDescription>
                 Free: Classic only. Pro+: Glassmorphism & Premium Dark with demo 3D avatars.
               </CardDescription>
@@ -1097,7 +1097,7 @@ export default function ProfileEditorPage() {
                     </p>
                   ) : (
                     <p className="mt-1 text-xs text-slate-500">
-                      Toggle to show or remove MigSmartCard branding on your public card.
+                      Toggle to show or remove MigSmartCard branding on your public profile.
                     </p>
                   )}
                 </div>
@@ -1119,7 +1119,7 @@ export default function ProfileEditorPage() {
                     <div>
                       <p className="text-sm font-semibold">Enterprise Branding Style</p>
                       <p className="text-xs text-slate-500">
-                        Choose how branding appears on public card and printable business card designs.
+                        Choose how branding appears on public profile and printable business card designs.
                       </p>
                     </div>
                     {planId === "enterprise" && (
@@ -1184,9 +1184,9 @@ export default function ProfileEditorPage() {
         <Button variant="outline" onClick={() => setShowLivePreview(true)} size="lg">
           <Eye className="h-4 w-4" /> Live Preview
         </Button>
-        <Button onClick={() => save(false)} loading={saving} size="lg">
-          <Save className="h-4 w-4" /> Save Card
-        </Button>
+          <Button onClick={() => save(false)} loading={saving} size="lg">
+            <Save className="h-4 w-4" /> Save Profile
+          </Button>
       </div>
 
       {showLivePreview && (
