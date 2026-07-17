@@ -12,7 +12,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { DigitalProfile } from "@/types";
 import { canUseFeature } from "@/lib/plans";
 
