@@ -3,12 +3,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db, ensureDbReady } from "@/lib/db";
 import { createId } from "@/lib/id";
+import { canUseFeature } from "@/lib/plans";
 
 export async function GET(req: NextRequest) {
   await ensureDbReady();
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Enforce the entitlement server-side as well as graying out the UI.
+  if (!canUseFeature(session.user.plan || "free", "analytics")) {
+    return NextResponse.json(
+      { error: "Analytics requires a Pro plan or higher" },
+      { status: 403 }
+    );
   }
 
   const { searchParams } = new URL(req.url);

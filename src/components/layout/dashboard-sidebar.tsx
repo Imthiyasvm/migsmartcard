@@ -22,12 +22,15 @@ import {
   Eye,
   IdCard,
   Wallet,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { UserAvatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "@/components/theme-provider";
 
 const userNav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -60,6 +63,7 @@ const adminNav = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -156,6 +160,17 @@ export function DashboardSidebar() {
       </nav>
 
       <div className="border-t border-slate-200 p-3 dark:border-[#1a1a1a]">
+        <button
+          onClick={toggleTheme}
+          className={cn(
+            "mb-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-[#1a1a1a]",
+            collapsed && "justify-center"
+          )}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {!collapsed && (theme === "dark" ? "Light mode" : "Dark mode")}
+        </button>
         {session?.user && (
           <div
             className={cn(

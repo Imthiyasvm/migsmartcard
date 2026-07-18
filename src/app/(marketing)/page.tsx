@@ -107,7 +107,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-zaffino-dark text-white">
+      <section className="relative overflow-hidden landing-hero">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMzUiPjxwYXRoIGQ9Ik0zNiAzNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
@@ -216,7 +216,7 @@ export default function HomePage() {
       </section>
 
       {/* Logos / trust */}
-      <section className="border-b border-slate-800 bg-zaffino-section-1 py-10">
+      <section className="landing-section landing-section-1 border-b py-10">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
           <p className="text-sm font-medium text-slate-500">
             Trusted by professionals at leading companies worldwide
@@ -237,7 +237,7 @@ export default function HomePage() {
       </section>
 
       {/* Demo profiles */}
-      <section id="demos" className="border-b border-slate-800 bg-zaffino-section-2 py-16">
+      <section id="demos" className="landing-section landing-section-2 border-b py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center animate-fade-in">
             <Badge variant="default" className="mb-4">Live demos</Badge>
@@ -278,7 +278,7 @@ export default function HomePage() {
               <Link
                 key={d.href}
                 href={d.href}
-                className="group overflow-hidden rounded-2xl border border-slate-800 bg-[#111] shadow-soft transition hover:-translate-y-1 hover:shadow-card hover:border-brand-500/50 animate-slide-up animate-delay-100"
+                className="group overflow-hidden rounded-2xl border landing-card shadow-soft transition hover:-translate-y-1 hover:shadow-card hover:border-brand-500/50 animate-slide-up animate-delay-100"
                 style={{ animationDelay: `${100 + index * 100}ms` }}
               >
                 <div
@@ -311,7 +311,7 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 sm:py-28 bg-zaffino-section-3">
+      <section id="features" className="landing-section landing-section-3 py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center animate-fade-in">
             <Badge variant="default" className="mb-4">Features</Badge>
@@ -327,7 +327,7 @@ export default function HomePage() {
             {features.map((f, index) => (
               <div
                 key={f.title}
-                className="group rounded-2xl border border-slate-800 bg-[#111] p-6 shadow-soft transition hover:border-brand-500/50 hover:shadow-card hover-lift animate-slide-up"
+                className="group rounded-2xl border landing-card p-6 shadow-soft transition hover:border-brand-500/50 hover:shadow-card hover-lift animate-slide-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-950/50 text-brand-400 transition group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 duration-300">
@@ -346,7 +346,7 @@ export default function HomePage() {
       {/* How it works */}
       <section
         id="how-it-works"
-        className="border-y border-slate-800 bg-zaffino-section-1 py-20 sm:py-28"
+        className="landing-section landing-section-1 border-y py-20 sm:py-28"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center animate-fade-in">
@@ -375,7 +375,7 @@ export default function HomePage() {
       </section>
 
       {/* Channels */}
-      <section className="py-20 sm:py-28 bg-zaffino-section-2">
+      <section className="landing-section landing-section-2 py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="animate-slide-left">
@@ -414,7 +414,7 @@ export default function HomePage() {
               ].map((stat, index) => (
                 <div
                   key={stat.label}
-                  className="rounded-2xl border border-slate-800 bg-[#111] p-5 shadow-soft hover:border-brand-500/50 hover:shadow-card hover-lift animate-scale-in"
+                  className="rounded-2xl border landing-card p-5 shadow-soft hover:border-brand-500/50 hover:shadow-card hover-lift animate-scale-in"
                   style={{ animationDelay: `${200 + index * 100}ms` }}
                 >
                   <p className="text-xs font-medium text-slate-500">{stat.label}</p>
@@ -430,7 +430,7 @@ export default function HomePage() {
       </section>
 
       {/* Benefits */}
-      <section className="border-y border-slate-800 bg-zaffino-section-3 py-20 sm:py-28">
+      <section className="landing-section landing-section-3 border-y py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center animate-fade-in">
             <Badge variant="default" className="mb-4">Why MigSmartCard?</Badge>
@@ -445,7 +445,7 @@ export default function HomePage() {
             {benefits.map((b, index) => (
               <div
                 key={b.title}
-                className="group rounded-2xl border border-slate-800 bg-[#111] p-6 shadow-soft transition hover:border-brand-500/50 hover:shadow-card hover-lift animate-slide-up"
+                className="group rounded-2xl border landing-card p-6 shadow-soft transition hover:border-brand-500/50 hover:shadow-card hover-lift animate-slide-up"
                 style={{ animationDelay: `${index * 150}ms` }}
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-950/50 text-brand-400 transition group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 duration-300">
@@ -464,7 +464,7 @@ export default function HomePage() {
       {/* Pricing */}
       <section
         id="pricing"
-        className="border-t border-slate-800 bg-zaffino-section-4 py-20 sm:py-28"
+        className="landing-section landing-section-4 border-t py-20 sm:py-28"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center animate-fade-in">
@@ -480,7 +480,7 @@ export default function HomePage() {
             {PLANS.map((plan, index) => (
               <div
                 key={plan.id}
-                className={`relative flex flex-col rounded-2xl border bg-[#111] p-6 shadow-soft transition hover:shadow-card hover-lift animate-slide-up ${
+                className={`relative flex flex-col rounded-2xl border landing-card p-6 shadow-soft transition hover:shadow-card hover-lift animate-slide-up ${
                   plan.popular
                     ? "border-brand-500 shadow-glow ring-1 ring-brand-500"
                     : "border-slate-800"
@@ -527,7 +527,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 sm:py-28 bg-zaffino-section-3">
+      <section className="landing-section landing-section-3 py-20 sm:py-28">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl animate-fade-in">
             Ready to connect smarter?
