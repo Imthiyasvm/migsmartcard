@@ -83,7 +83,12 @@ export async function POST(req: NextRequest) {
   // hosted checkout (card / Apple Pay / Google Pay).
   try {
     const amountFils = Math.max(usdToFils(priceUsd), MIN_CHARGE_FILS);
-    const confirmUrl = absoluteUrl("/api/billing/confirm");
+    // Ziina does not append the intent id automatically. Per Ziina docs, the
+    // literal placeholder below is replaced with the created Payment Intent ID
+    // when the hosted checkout returns to our app.
+    const confirmUrl = absoluteUrl(
+      "/api/billing/confirm?payment_intent={PAYMENT_INTENT_ID}"
+    );
     const intent = await createPaymentIntent({
       amountFils,
       message: `MigSmartCard ${plan.name} plan (${cycle})`,

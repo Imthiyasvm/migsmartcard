@@ -38,7 +38,7 @@ ZIINA_USD_TO_AED=3.6725                        # plan/card prices are stored in 
 | `ZIINA_WEBHOOK_SECRET` | recommended | Shared secret used to verify the `X-Hmac-Signature` header on webhooks. |
 | `ZIINA_TEST_MODE` | optional | `true` (default) creates *test* payment intents — no real money moves. Set `false` only when going live. |
 | `ZIINA_USD_TO_AED` | optional | Conversion rate for USD catalogue prices. Defaults to `3.6725`. |
-| `ZIINA_API_BASE` | optional | Overrides the API base URL (`https://api.ziina.com/api`) for testing against a stub. |
+| `ZIINA_API_BASE` | optional | Overrides the API base URL (`https://api-v2.ziina.com/api`) for testing against a stub. |
 
 ## 3. Register the webhook
 
@@ -59,13 +59,16 @@ Every delivery is verified as a hex HMAC-SHA256 of the raw request body
    **Payment Intent** (amount in **fils**, 1 AED = 100 fils; minimum charge
    2 AED) and returns the hosted checkout `redirect_url`.
 2. The browser is redirected to Ziina (card / Apple Pay / Google Pay).
-3. On completion the browser returns to `/api/billing/confirm`, which
+3. The return URL sent to Ziina includes the literal
+   `{PAYMENT_INTENT_ID}` placeholder, so Ziina replaces it with the created
+   intent id when redirecting back.
+4. On completion the browser returns to `/api/billing/confirm`, which
    re-fetches the intent from Ziina (authoritative status) and **finalizes
    immediately** — no waiting on the webhook.
-4. Ziina also fires the webhook → `/api/billing/webhook` re-confirms and
+5. Ziina also fires the webhook → `/api/billing/webhook` re-confirms and
    fulfills through the same **idempotent** helper. Duplicate delivery is a
    no-op.
-5. Every transaction is visible in **Admin → Payments**.
+6. Every transaction is visible in **Admin → Payments**.
 
 ## 5. Going live checklist
 
