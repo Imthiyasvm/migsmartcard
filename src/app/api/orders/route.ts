@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
   if (isZiinaConfigured()) {
     try {
       const totalFils = Math.max(usdToFils(unitPriceUsd * qty), MIN_CHARGE_FILS);
-      const confirmUrl = absoluteUrl("/api/billing/confirm?to=/dashboard/shop");
+      // Ziina replaces this literal placeholder with the Payment Intent ID on
+      // return, allowing our confirm route to fetch the authoritative status.
+      const confirmUrl = absoluteUrl(
+        "/api/billing/confirm?to=/dashboard/shop&payment_intent={PAYMENT_INTENT_ID}"
+      );
       const intent = await createPaymentIntent({
         amountFils: totalFils,
         message: `MigSmartCard order — ${designName} × ${qty}`,

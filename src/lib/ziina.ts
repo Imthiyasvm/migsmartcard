@@ -4,8 +4,10 @@ import { db } from "@/lib/db";
 /**
  * Ziina (UAE) payment gateway client.
  *
- * - Payment Intents API: https://api.ziina.com/api/payment_intent
+ * - Payment Intents API: https://api-v2.ziina.com/api/payment_intent
  * - Amounts are in fils (1 AED = 100 fils; Ziina minimum charge is 200 fils = 2 AED)
+ * - Return URLs must include the literal `{PAYMENT_INTENT_ID}` placeholder
+ *   when we need Ziina to send the intent id back to our confirm route.
  * - Webhooks are authenticated with an `X-Hmac-Signature` header:
  *   hex-encoded HMAC-SHA256 of the raw request body using the webhook secret.
  *
@@ -15,15 +17,17 @@ import { db } from "@/lib/db";
  */
 
 const API_BASE = (
-  process.env.ZIINA_API_BASE || "https://api.ziina.com/api"
+  process.env.ZIINA_API_BASE || "https://api-v2.ziina.com/api"
 ).replace(/\/+$/, "");
 
 export type ZiinaIntentStatus =
   | "requires_payment_instrument"
   | "requires_user_action"
+  | "pending"
   | "completed"
   | "canceled"
   | "failed"
+  // Some older/stub responses may still return expired; treat it like canceled.
   | "expired";
 
 export interface ZiinaPaymentIntent {
