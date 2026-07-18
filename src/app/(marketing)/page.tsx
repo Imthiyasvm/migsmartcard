@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PLANS } from "@/lib/plans";
+import { CountUp } from "@/components/count-up";
 
 const features = [
   {
@@ -218,15 +219,15 @@ export default function HomePage() {
       {/* Logos / trust */}
       <section className="landing-section landing-section-1 border-b py-10">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Trusted by professionals at leading companies worldwide
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-8 opacity-50 grayscale">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-8 grayscale">
             {["Mignet", "Acme Corp", "Globex", "Initech", "Umbrella"].map(
               (name) => (
                 <span
                   key={name}
-                  className="text-lg font-bold tracking-tight text-slate-400 hover:text-brand-400 transition-colors duration-300"
+                  className="text-lg font-bold tracking-tight text-slate-600 transition-colors duration-300 hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-300"
                 >
                   {name}
                 </span>
@@ -300,9 +301,9 @@ export default function HomePage() {
                       className="h-24 w-24 max-w-none object-cover object-[center_15%]"
                     />
                   </div>
-                  <h3 className="mt-3 font-bold group-hover:text-brand-400 transition-colors">{d.name}</h3>
+                  <h3 className="mt-3 font-bold group-hover:text-brand-700 transition-colors dark:group-hover:text-brand-300">{d.name}</h3>
                   <p className="text-xs text-slate-500">{d.role}</p>
-                  <span className="mt-3 inline-block text-xs font-semibold text-brand-400 group-hover:translate-x-1 transition-transform">Open live profile →</span>
+                  <span className="mt-3 inline-block text-xs font-semibold text-brand-700 transition-transform group-hover:translate-x-1 dark:text-brand-300">Open live profile →</span>
                 </div>
               </Link>
             ))}
@@ -330,7 +331,7 @@ export default function HomePage() {
                 className="group rounded-2xl border landing-card p-6 shadow-soft transition hover:border-brand-500/50 hover:shadow-card hover-lift animate-slide-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-950/50 text-brand-400 transition group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 duration-300">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-300 transition group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 duration-300">
                   <f.icon className="h-6 w-6" />
                 </div>
                 <h3 className="text-lg font-semibold">{f.title}</h3>
@@ -361,7 +362,7 @@ export default function HomePage() {
                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-glow group-hover:scale-110 transition-transform duration-300">
                   <s.icon className="h-7 w-7" />
                 </div>
-                <span className="text-xs font-bold uppercase tracking-widest text-brand-400">
+                <span className="text-xs font-bold uppercase tracking-widest text-brand-700 dark:text-brand-300">
                   Step {s.step}
                 </span>
                 <h3 className="mt-2 text-xl font-semibold">{s.title}</h3>
@@ -397,7 +398,7 @@ export default function HomePage() {
                   { icon: Smartphone, label: "Email signatures & wallets" },
                 ].map((item, index) => (
                   <li key={item.label} className="flex items-center gap-3 animate-slide-right" style={{ animationDelay: `${300 + index * 100}ms` }}>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-950/50 text-brand-400 group-hover:bg-brand-600 group-hover:text-white transition-all duration-300">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-300 group-hover:bg-brand-600 group-hover:text-white transition-all duration-300">
                       <item.icon className="h-4 w-4" />
                     </div>
                     <span className="text-sm font-medium">{item.label}</span>
@@ -407,10 +408,10 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: "Profile Views", value: "12.4K", change: "+24%" },
-                { label: "Leads Captured", value: "847", change: "+18%" },
-                { label: "NFC Taps", value: "3.2K", change: "+41%" },
-                { label: "Link Clicks", value: "5.8K", change: "+12%" },
+                { label: "Profile Views", value: 12400, change: "+24%" },
+                { label: "Leads Captured", value: 847, change: "+18%" },
+                { label: "NFC Taps", value: 3200, change: "+41%" },
+                { label: "Link Clicks", value: 5800, change: "+12%" },
               ].map((stat, index) => (
                 <div
                   key={stat.label}
@@ -418,8 +419,10 @@ export default function HomePage() {
                   style={{ animationDelay: `${200 + index * 100}ms` }}
                 >
                   <p className="text-xs font-medium text-slate-500">{stat.label}</p>
-                  <p className="mt-1 text-2xl font-bold text-brand-300">{stat.value}</p>
-                  <p className="mt-1 text-xs font-semibold text-brand-400">
+                  <p className="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">
+                    <CountUp end={stat.value} />
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-brand-700 dark:text-brand-300">
                     {stat.change} this month
                   </p>
                 </div>
@@ -448,7 +451,7 @@ export default function HomePage() {
                 className="group rounded-2xl border landing-card p-6 shadow-soft transition hover:border-brand-500/50 hover:shadow-card hover-lift animate-slide-up"
                 style={{ animationDelay: `${index * 150}ms` }}
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-950/50 text-brand-400 transition group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 duration-300">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-300 transition group-hover:bg-brand-600 group-hover:text-white group-hover:scale-110 duration-300">
                   <b.icon className="h-6 w-6" />
                 </div>
                 <h3 className="text-lg font-semibold">{b.title}</h3>
@@ -483,7 +486,7 @@ export default function HomePage() {
                 className={`relative flex flex-col rounded-2xl border landing-card p-6 shadow-soft transition hover:shadow-card hover-lift animate-slide-up ${
                   plan.popular
                     ? "border-brand-500 shadow-glow ring-1 ring-brand-500"
-                    : "border-slate-800"
+                    : "border-slate-200 dark:border-slate-800"
                 }`}
                 style={{ animationDelay: `${200 + index * 100}ms` }}
               >
@@ -495,7 +498,7 @@ export default function HomePage() {
                 <h3 className="text-lg font-bold">{plan.name}</h3>
                 <p className="mt-1 text-xs text-slate-500">{plan.description}</p>
                 <div className="mt-4">
-                  <span className="text-4xl font-extrabold text-brand-300">${plan.price}</span>
+                  <span className="text-4xl font-extrabold text-brand-700 dark:text-brand-300">${plan.price}</span>
                   <span className="text-sm text-slate-500">/mo</span>
                 </div>
                 {plan.priceYearly > 0 && (
@@ -506,8 +509,8 @@ export default function HomePage() {
                 <ul className="mt-6 flex-1 space-y-2.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
-                      <span className="text-slate-300">{f}</span>
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-700 dark:text-brand-300" />
+                      <span className="text-slate-700 dark:text-slate-300">{f}</span>
                     </li>
                   ))}
                 </ul>

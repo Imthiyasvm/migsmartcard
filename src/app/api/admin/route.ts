@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { getPlan } from "@/lib/plans";
 import { ziinaTestMode } from "@/lib/ziina";
 import { PlatformSettings } from "@/types";
+import { slugify } from "@/lib/utils";
 
 function omitPassword<T extends { password?: string }>(user: T) {
   const { password, ...rest } = user;
@@ -227,6 +228,100 @@ export async function POST(req: NextRequest) {
 
   if (action === "delete-user") {
     db.users.delete(body.userId);
+    return NextResponse.json({ success: true });
+  }
+
+  if (action === "create-blog" || action === "update-blog") {
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: "Title and article content are required" },
+        { status: 400 }
+      );
+    }
+
+    const existing = body.blogId ? db.blogs.getById(body.blogId) : undefined;
+    if (action === "update-blog" && !existing) {
+      return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
+    }
+
+    const slug = slugify(
+      typeof body.slug === "string" && body.slug.trim() ? body.slug : title
+    ) || `article-${Date.now()}`;
+    const slugOwner = db.blogs.getBySlug(slug);
+    if (slugOwner && slugOwner.id !== body.blogId) {
+      return NextResponse.json(
+        { error: "That slug is already in use" },
+        { status: 409 }
+      );
+    }
+
+    const now = new Date().toISOString();
+    const published = body.published === true;
+    const publishedAt = published
+      ? existing?.publishedAt || now
+      : undefined;
+    const tags = Array.isArray(body.tags)
+      ? body.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean)
+      : typeof body.tags === "string"
+        ? body.tags.split(",").map((tag: string) => tag.trim()).filter(Boolean)
+        : existing?.tags || [];
+
+    if (existing) {
+      const post = db.blogs.update(existing.id, {
+        title,
+        slug,
+        excerpt: typeof body.excerpt === "string" ? body.excerpt.trim() : "",
+        content,
+        authorName: typeof body.authorName === "string" && body.authorName.trim() ? body.authorName.trim() : "MigSmartCard Editorial Team",
+        category: typeof body.category === "string" && body.category.trim() ? body.category.trim() : "Networking",
+        tags,
+        coverImage: typeof body.coverImage === "string" ? body.coverImage.trim() : "",
+        published,
+        publishedAt,
+        seoTitle: typeof body.seoTitle === "string" ? body.seoTitle.trim() : "",
+        seoDescription: typeof body.seoDescription === "string" ? body.seoDescription.trim() : "",
+        seoKeywords: typeof body.seoKeywords === "string"
+          ? body.seoKeywords.split(",").map((keyword: string) => keyword.trim()).filter(Boolean)
+          : Array.isArray(body.seoKeywords) ? body.seoKeywords.map((keyword: unknown) => String(keyword).trim()).filter(Boolean) : [],
+        canonicalUrl: typeof body.canonicalUrl === "string" ? body.canonicalUrl.trim() : "",
+        ogImage: typeof body.ogImage === "string" ? body.ogImage.trim() : "",
+      });
+      await persistDb();
+      return NextResponse.json({ success: true, blog: post });
+    }
+
+    const post = db.blogs.create({
+      id: createId("blog"),
+      slug,
+      title,
+      excerpt: typeof body.excerpt === "string" ? body.excerpt.trim() : "",
+      content,
+      authorName: typeof body.authorName === "string" && body.authorName.trim() ? body.authorName.trim() : "MigSmartCard Editorial Team",
+      category: typeof body.category === "string" && body.category.trim() ? body.category.trim() : "Networking",
+      tags,
+      coverImage: typeof body.coverImage === "string" ? body.coverImage.trim() : "",
+      published,
+      publishedAt,
+      createdAt: now,
+      updatedAt: now,
+      seoTitle: typeof body.seoTitle === "string" ? body.seoTitle.trim() : "",
+      seoDescription: typeof body.seoDescription === "string" ? body.seoDescription.trim() : "",
+      seoKeywords: typeof body.seoKeywords === "string"
+        ? body.seoKeywords.split(",").map((keyword: string) => keyword.trim()).filter(Boolean)
+        : [],
+      canonicalUrl: typeof body.canonicalUrl === "string" ? body.canonicalUrl.trim() : "",
+      ogImage: typeof body.ogImage === "string" ? body.ogImage.trim() : "",
+    });
+    await persistDb();
+    return NextResponse.json({ success: true, blog: post });
+  }
+
+  if (action === "delete-blog") {
+    const deleted = db.blogs.delete(body.blogId);
+    if (!deleted) return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
+    await persistDb();
     return NextResponse.json({ success: true });
   }
 

@@ -12,7 +12,9 @@ import {
   ProfileTheme,
   Payment,
   PlatformSettings,
+  BlogPost,
 } from "@/types";
+import { buildSeedBlogs } from "./blog-seeds";
 import {
   loadStoreFromRedis,
   saveStoreToRedis,
@@ -47,6 +49,7 @@ type Store = {
   nfcCards: NfcCard[];
   orders: CardOrder[];
   payments: Payment[];
+  blogs: BlogPost[];
   settings: PlatformSettings;
   seeded: boolean;
 };
@@ -76,6 +79,7 @@ function getMemoryStore(): Store {
       nfcCards: [],
       orders: [],
       payments: [],
+      blogs: [],
       settings: { ...DEFAULT_SETTINGS },
       seeded: false,
     };
@@ -92,6 +96,7 @@ const FILE_MAP: Record<keyof Omit<Store, "seeded">, string> = {
   nfcCards: "nfc-cards.json",
   orders: "orders.json",
   payments: "payments.json",
+  blogs: "blogs.json",
   settings: "settings.json",
 };
 
@@ -181,6 +186,7 @@ export async function ensureDbReady(): Promise<void> {
         store.nfcCards = (remote.nfcCards as Store["nfcCards"]) || [];
         store.orders = (remote.orders as Store["orders"]) || [];
         store.payments = (remote.payments as Store["payments"]) || [];
+        store.blogs = (remote.blogs as Store["blogs"]) || buildSeedBlogs();
         store.settings =
           (remote.settings as Store["settings"]) || { ...DEFAULT_SETTINGS };
         store.seeded = true;
@@ -676,6 +682,7 @@ function buildSeedData(): Omit<Store, "seeded"> {
     nfcCards,
     orders,
     payments: [],
+    blogs: buildSeedBlogs(now),
     settings: { ...DEFAULT_SETTINGS, updatedAt: now },
   };
 }
@@ -685,7 +692,10 @@ function ensureSeeded() {
 
   if (IS_SERVERLESS) {
     const store = getMemoryStore();
-    if (store.seeded && store.users.length > 0) return;
+    if (store.seeded && store.users.length > 0) {
+      if (!store.blogs?.length) store.blogs = buildSeedBlogs();
+      return;
+    }
     const seed = buildSeedData();
     Object.assign(store, seed, { seeded: true });
     return;
@@ -693,7 +703,11 @@ function ensureSeeded() {
 
   ensureDataDir();
   const usersFile = path.join(DATA_DIR, "users.json");
-  if (fs.existsSync(usersFile)) return;
+  if (fs.existsSync(usersFile)) {
+    const blogsFile = path.join(DATA_DIR, "blogs.json");
+    if (!fs.existsSync(blogsFile)) writeJsonFile("blogs.json", buildSeedBlogs());
+    return;
+  }
 
   const seed = buildSeedData();
   writeJsonFile("users.json", seed.users);
@@ -704,6 +718,7 @@ function ensureSeeded() {
   writeJsonFile("nfc-cards.json", seed.nfcCards);
   writeJsonFile("orders.json", seed.orders);
   writeJsonFile("payments.json", seed.payments);
+  writeJsonFile("blogs.json", seed.blogs);
   writeJsonFile("settings.json", seed.settings);
 }
 
@@ -941,6 +956,46 @@ export const db = {
       };
       writeCollection("payments", payments);
       return payments[idx];
+    },
+  },
+
+  blogs: {
+    getAll: (): BlogPost[] =>
+      [...db.blogs.getRaw()].sort((a, b) => {
+          const aDate = new Date(a.publishedAt || a.createdAt).getTime();
+          const bDate = new Date(b.publishedAt || b.createdAt).getTime();
+          return bDate - aDate;
+        }),
+    // Keep a raw accessor so sorting never mutates the persisted collection.
+    getRaw: (): BlogPost[] => readCollection("blogs"),
+    getById: (id: string): BlogPost | undefined =>
+      db.blogs.getRaw().find((post) => post.id === id),
+    getBySlug: (slug: string): BlogPost | undefined =>
+      db.blogs.getRaw().find((post) => post.slug === slug),
+    create: (post: BlogPost): BlogPost => {
+      const posts = db.blogs.getRaw();
+      posts.push(post);
+      writeCollection("blogs", posts);
+      return post;
+    },
+    update: (id: string, data: Partial<BlogPost>): BlogPost | null => {
+      const posts = db.blogs.getRaw();
+      const idx = posts.findIndex((post) => post.id === id);
+      if (idx === -1) return null;
+      posts[idx] = {
+        ...posts[idx],
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      writeCollection("blogs", posts);
+      return posts[idx];
+    },
+    delete: (id: string): boolean => {
+      const posts = db.blogs.getRaw();
+      const next = posts.filter((post) => post.id !== id);
+      if (next.length === posts.length) return false;
+      writeCollection("blogs", next);
+      return true;
     },
   },
 

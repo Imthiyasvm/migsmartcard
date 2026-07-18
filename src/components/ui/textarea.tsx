@@ -5,10 +5,11 @@ export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
+  hint?: string;
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, label, error, id, ...props }, ref) => {
+  ({ className, label, error, hint, id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
     return (
       <div className="w-full space-y-1.5">
@@ -31,6 +32,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
+        {hint && !error && (
+          <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p>
+        )}
       </div>
     );
   }
