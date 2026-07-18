@@ -61,6 +61,7 @@ export default function DashboardPage() {
   );
 
   useEffect(() => {
+    if (!isProPlus) return;
     fetch("/api/analytics?days=30")
       .then((r) => r.json())
       .then((d) => {
@@ -78,7 +79,7 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((d) => setProfile(d.profile))
       .catch(() => {});
-  }, []);
+  }, [isProPlus]);
 
   const stats = [
     {

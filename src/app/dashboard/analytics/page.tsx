@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [days]);
+  }, [days, isProPlus]);
 
   const summary = data?.summary || {};
 
