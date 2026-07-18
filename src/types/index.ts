@@ -203,6 +203,29 @@ export interface PlatformSettings {
   updatedAt: string;
 }
 
+/** A publishing-ready article managed from the platform admin. */
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  authorName: string;
+  category: string;
+  tags: string[];
+  coverImage?: string;
+  published: boolean;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Search metadata; falls back to title/excerpt when empty. */
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
+  canonicalUrl?: string;
+  ogImage?: string;
+}
+
 /** A single transaction — either a subscription upgrade or a card order. */
 export interface Payment {
   id: string;

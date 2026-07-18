@@ -181,6 +181,9 @@ export async function saveStoreToRedis(
     analytics: [],
     nfcCards: store.nfcCards,
     orders: store.orders,
+    payments: store.payments,
+    blogs: store.blogs,
+    settings: store.settings,
   };
   let body = JSON.stringify(payload);
   if (body.length > 900_000) {
