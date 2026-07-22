@@ -82,6 +82,7 @@ export async function GET(req: NextRequest) {
       social: {},
       customLinks: [],
       theme: { ...DEFAULT_THEME },
+      qrCodeId: createId("qr"),
       isPublic: true,
       createdAt: now,
       updatedAt: now,
@@ -161,6 +162,9 @@ export async function POST(req: NextRequest) {
     social: body.social || {},
     customLinks: body.customLinks || [],
     theme: body.theme || { ...DEFAULT_THEME },
+    // Every new profile gets its own dynamic QR code identity (Pro+ surface it
+    // with a custom generator; all plans get a live, re-targetable QR).
+    qrCodeId: createId("qr"),
     isPublic: body.isPublic !== false,
     createdAt: now,
     updatedAt: now,
@@ -288,6 +292,9 @@ export async function PUT(req: NextRequest) {
   if (next.isPublic === undefined || next.isPublic === null) {
     next.isPublic = true;
   }
+
+  // Ensure every profile carries a dynamic QR identity (heal legacy profiles).
+  if (!next.qrCodeId) next.qrCodeId = createId("qr");
 
   const saved = await saveProfilePersistent(next);
   // Double-write: ensure slug key is fresh even if full store write is heavy

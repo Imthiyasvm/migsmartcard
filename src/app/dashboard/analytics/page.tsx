@@ -176,7 +176,9 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Analytics</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Track engagement across all channels
+            {data?.isAdmin
+              ? "Platform-wide engagement across every profile"
+              : "Track engagement across all channels"}
           </p>
         </div>
         <div className="flex gap-2">

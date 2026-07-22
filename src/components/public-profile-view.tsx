@@ -164,13 +164,22 @@ export function PublicProfileView({ profile, src }: Props) {
         ? "rounded-md"
         : "rounded-xl";
 
+  // Classic surfaces follow the *theme's* background luminance — not the
+  // dashboard's light/dark mode — so text always keeps proper contrast.
+  // (Classic is a light card by default; a dark classic theme stays dark.)
+  const classicLight =
+    getContrastColor(theme.backgroundColor || "#f8fafc") === "#0f172a";
+  const classicSurface = classicLight ? "#ffffff" : "#161616";
+
   const panel = cn(
     "shadow-soft transition",
     isGlass
       ? "border border-white/20 bg-white/10 backdrop-blur-xl"
       : isPremium
         ? "border border-brand-500/20 bg-zinc-900/80"
-        : "bg-white dark:bg-[#141414]",
+        : classicLight
+          ? "border border-black/[0.05] bg-white dark:bg-white"
+          : "border border-white/[0.06] bg-[#161616] dark:bg-[#161616]",
     radius
   );
 
@@ -191,7 +200,7 @@ export function PublicProfileView({ profile, src }: Props) {
 
   const textColor = isGlass || isPremium
     ? "#f8fafc"
-    : theme.textColor || getContrastColor(theme.backgroundColor || "#f8fafc");
+    : theme.textColor || getContrastColor(classicSurface);
 
   return (
     <div className="min-h-screen" style={pageBg}>
@@ -235,7 +244,11 @@ export function PublicProfileView({ profile, src }: Props) {
               photoShape === "square" ? "rounded-2xl" : "rounded-full",
               isGlass && "border border-white/30 bg-white/10 p-1.5 backdrop-blur-md",
               isPremium && "border-2 p-1",
-              !isGlass && !isPremium && "bg-white dark:bg-slate-900"
+              !isGlass &&
+                !isPremium &&
+                (classicLight
+                  ? "bg-white dark:bg-white"
+                  : "bg-[#161616] dark:bg-[#161616]")
             )}
             style={isPremium ? { borderColor: primary } : undefined}
           >
@@ -306,7 +319,9 @@ export function PublicProfileView({ profile, src }: Props) {
               radius,
               isGlass || isPremium
                 ? "border-white/20 bg-white/10 text-white"
-                : "border-slate-200 bg-white text-slate-700"
+                : classicLight
+                  ? "border-slate-200 bg-white text-slate-700"
+                  : "border-white/15 bg-white/10 text-slate-100"
             )}
           >
             {copied ? (
@@ -452,7 +467,9 @@ export function PublicProfileView({ profile, src }: Props) {
                     "flex h-12 w-12 items-center justify-center rounded-full shadow-soft transition hover:scale-105",
                     isGlass || isPremium
                       ? "border border-white/20 bg-white/10 text-white"
-                      : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      : classicLight
+                        ? "bg-slate-100 text-slate-700 dark:bg-slate-100 dark:text-slate-700"
+                        : "border border-white/15 bg-white/10 text-slate-100"
                   )}
                 >
                   <SocialGlyph network={key} className="h-5 w-5" />

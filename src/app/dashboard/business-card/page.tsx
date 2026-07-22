@@ -10,6 +10,7 @@ import {
   Smartphone,
   Monitor,
   Sparkles,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -160,6 +161,7 @@ export default function BusinessCardDesignerPage() {
   const [qrUrl, setQrUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [printHint, setPrintHint] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -357,9 +359,9 @@ export default function BusinessCardDesignerPage() {
         fontWeight === "600" ? "600" : fontWeight === "700" ? "700" : "800";
 
       if (isLandscape) {
-        const avatar = 180;
+        const avatar = 232;
         const qrSize = 210;
-        drawAvatar(70, H / 2 - avatar / 2 - 20, avatar);
+        drawAvatar(58, H / 2 - avatar / 2 - 18, avatar);
 
         const tx = 325;
         ctx.textAlign = "left";
@@ -399,14 +401,14 @@ export default function BusinessCardDesignerPage() {
         ctx.textAlign = "center";
         ctx.fillText("Scan digital card", W - 175, H / 2 + qrSize / 2 + 15);
       } else {
-        const avatar = 210;
+        const avatar = 272;
         const qrSize = 250;
-        drawAvatar(W / 2 - avatar / 2, 80, avatar);
+        drawAvatar(W / 2 - avatar / 2, 64, avatar);
         ctx.textAlign = "center";
         ctx.fillStyle = style.fg;
         ctx.font = `${weight} ${namePx}px Inter, system-ui, sans-serif`;
-        ctx.fillText(profile.fullName || "Your Name", W / 2, 380, W - 80);
-        let ty = 430;
+        ctx.fillText(profile.fullName || "Your Name", W / 2, 400, W - 80);
+        let ty = 448;
         if (showTitle && profile.jobTitle) {
           ctx.fillStyle = style.muted;
           ctx.font = "24px Inter, system-ui, sans-serif";
@@ -493,6 +495,50 @@ export default function BusinessCardDesignerPage() {
       a.download = `${profile.slug || "business-card"}-${orientation}-${styleId}.png`;
       a.href = canvas.toDataURL("image/png");
       a.click();
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const printCard = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !profile) return;
+    setExporting(true);
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      const win = window.open("", "_blank", "width=900,height=700");
+      if (!win) {
+        setPrintHint("Popup blocked — allow popups to print your card.");
+        setTimeout(() => setPrintHint(""), 5000);
+        return;
+      }
+      // Render at true business-card proportions, centered on the page.
+      win.document.write(`<!doctype html>
+<html>
+  <head>
+    <title>Print ${profile.fullName || "Business Card"}</title>
+    <style>
+      @page { margin: 12mm; }
+      html, body { margin: 0; padding: 0; background: #f1f5f9; }
+      body {
+        display: flex; align-items: center; justify-content: center;
+        min-height: 100vh; font-family: system-ui, sans-serif;
+      }
+      .card {
+        width: 100%; max-width: ${orientation === "landscape" ? "720px" : "420px"};
+        border-radius: 16px; overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+      }
+      img { display: block; width: 100%; height: auto; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="${dataUrl}" onload="setTimeout(function(){ window.print(); }, 150);" />
+    </div>
+  </body>
+</html>`);
+      win.document.close();
     } finally {
       setExporting(false);
     }
@@ -585,10 +631,21 @@ export default function BusinessCardDesignerPage() {
             Glassmorphism 2-image models · interactive photo cropper · enterprise branding controls
           </p>
         </div>
-        <Button size="sm" onClick={downloadPng} loading={exporting}>
-          <Download className="h-4 w-4" /> Download PNG
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={printCard} loading={exporting}>
+            <Printer className="h-4 w-4" /> Print Card
+          </Button>
+          <Button size="sm" onClick={downloadPng} loading={exporting}>
+            <Download className="h-4 w-4" /> Download PNG
+          </Button>
+        </div>
       </div>
+
+      {printHint && (
+        <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/30">
+          {printHint}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <div className="space-y-4">

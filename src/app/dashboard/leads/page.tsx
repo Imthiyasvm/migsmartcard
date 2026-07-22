@@ -16,6 +16,7 @@ import { Lead } from "@/types";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = () => {
@@ -23,6 +24,7 @@ export default function LeadsPage() {
       .then((r) => r.json())
       .then((d) => {
         setLeads(d.leads || []);
+        setIsAdmin(Boolean(d.isAdmin));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -39,12 +41,16 @@ export default function LeadsPage() {
   };
 
   const exportCsv = () => {
-    const header = "Name,Email,Phone,Company,Message,Source,Date\n";
+    const header = isAdmin
+      ? "Name,Email,Phone,Company,Message,Source,Profile,Owner,Date\n"
+      : "Name,Email,Phone,Company,Message,Source,Date\n";
     const rows = leads
-      .map(
-        (l) =>
-          `"${l.name}","${l.email}","${l.phone || ""}","${l.company || ""}","${(l.message || "").replace(/"/g, '""')}","${l.source}","${l.createdAt}"`
-      )
+      .map((l) => {
+        const base = `"${l.name}","${l.email}","${l.phone || ""}","${l.company || ""}","${(l.message || "").replace(/"/g, '""')}","${l.source}"`;
+        return isAdmin
+          ? `${base},"${l.profileName || ""}","${l.ownerEmail || l.ownerName || ""}","${l.createdAt}"`
+          : `${base},"${l.createdAt}"`;
+      })
       .join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -68,7 +74,9 @@ export default function LeadsPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Leads</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Contacts captured from your digital profile
+            {isAdmin
+              ? "All contact exchanges captured across every profile on the platform"
+              : "Contacts captured from your digital profile"}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={exportCsv} disabled={!leads.length}>
@@ -115,6 +123,12 @@ export default function LeadsPage() {
                       </Badge>
                       {!lead.viewed && (
                         <Badge variant="default">New</Badge>
+                      )}
+                      {isAdmin && (lead.profileName || lead.ownerName) && (
+                        <Badge variant="outline" className="text-[10px]">
+                          → {lead.profileName || lead.ownerName}
+                          {lead.ownerEmail ? ` (${lead.ownerEmail})` : ""}
+                        </Badge>
                       )}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
