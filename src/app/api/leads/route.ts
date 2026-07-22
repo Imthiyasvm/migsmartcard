@@ -11,8 +11,38 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const leads = db.leads.getByUserId(session.user.id);
-  return NextResponse.json({ leads });
+  const isAdmin = session.user.role === "admin";
+
+  // Platform admins see every contact exchange across all profiles;
+  // regular users only see leads captured on their own profiles.
+  let leads = isAdmin
+    ? [...db.leads.getAll()].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+    : db.leads.getByUserId(session.user.id);
+
+  if (isAdmin) {
+    leads = leads.map((l) => {
+      const profile = l.profileId
+        ? db.profiles.getById(l.profileId)
+        : undefined;
+      const owner = profile
+        ? db.users.getById(profile.userId)
+        : l.userId
+          ? db.users.getById(l.userId)
+          : undefined;
+      return {
+        ...l,
+        profileName: profile?.cardName || profile?.fullName,
+        profileSlug: profile?.slug,
+        ownerName: owner?.name,
+        ownerEmail: owner?.email,
+      };
+    });
+  }
+
+  return NextResponse.json({ leads, isAdmin });
 }
 
 export async function POST(req: NextRequest) {
@@ -76,8 +106,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Lead ID required" }, { status: 400 });
   }
 
-  const leads = db.leads.getByUserId(session.user.id);
-  if (!leads.find((l) => l.id === id)) {
+  const isAdmin = session.user.role === "admin";
+  const scope = isAdmin
+    ? db.leads.getAll()
+    : db.leads.getByUserId(session.user.id);
+  if (!scope.find((l) => l.id === id)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

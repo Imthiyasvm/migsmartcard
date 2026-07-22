@@ -22,7 +22,12 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const days = parseInt(searchParams.get("days") || "30", 10);
 
-  const events = db.analytics.getByUserId(session.user.id);
+  // Platform admins see aggregate analytics across every profile;
+  // regular users see engagement on their own profiles only.
+  const isAdmin = session.user.role === "admin";
+  const events = isAdmin
+    ? db.analytics.getAll()
+    : db.analytics.getByUserId(session.user.id);
   const cutoff = Date.now() - days * 86400000;
   const filtered = events.filter(
     (e) => new Date(e.createdAt).getTime() >= cutoff
@@ -82,6 +87,7 @@ export async function GET(req: NextRequest) {
     });
 
   return NextResponse.json({
+    isAdmin,
     summary: {
       views,
       uniqueVisitors: uniqueDevices,

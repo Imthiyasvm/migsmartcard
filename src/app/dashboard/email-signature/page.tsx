@@ -33,15 +33,26 @@ function generateSignature(
   const initials = profile.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2);
   const jobLine = `${profile.jobTitle}${profile.companyName ? ` · ${profile.companyName}` : ""}`;
 
+  // Automatically use the uploaded profile photo when available,
+  // falling back to an initials monogram.
+  const photo =
+    profile.profilePhoto && profile.profilePhoto.trim()
+      ? profile.profilePhoto.trim()
+      : "";
+  const classicAvatar = photo
+    ? `<img src="${photo}" width="64" height="64" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;display:block;border:2px solid ${primary};" />`
+    : `<div style="width:64px;height:64px;border-radius:50%;background:${primary};color:#fff;text-align:center;line-height:64px;font-weight:bold;font-size:20px;">${initials}</div>`;
+  const modernAvatar = photo
+    ? `<img src="${photo}" width="72" height="72" alt="" style="width:72px;height:72px;border-radius:12px;object-fit:cover;display:block;" />`
+    : `<div style="width:72px;height:72px;border-radius:12px;background:${primary};color:#fff;text-align:center;line-height:72px;font-weight:bold;font-size:22px;">${initials}</div>`;
+
   switch (template) {
     case "modern":
       return `<!-- MigSmartCard Email Signature — Modern -->
 <table cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#334155;line-height:1.5;">
   <tr>
     <td style="padding-right:20px;border-right:3px solid ${primary};vertical-align:top;">
-      <div style="width:72px;height:72px;border-radius:12px;background:${primary};color:#fff;text-align:center;line-height:72px;font-weight:bold;font-size:22px;">
-        ${initials}
-      </div>
+      ${modernAvatar}
     </td>
     <td style="padding-left:20px;vertical-align:top;">
       <div style="font-size:18px;font-weight:700;color:#0f172a;">${profile.fullName}</div>
@@ -112,9 +123,7 @@ function generateSignature(
 <table cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#334155;line-height:1.4;">
   <tr>
     <td style="padding-right:16px;border-right:2px solid ${primary};vertical-align:top;">
-      <div style="width:64px;height:64px;border-radius:50%;background:${primary};color:#fff;text-align:center;line-height:64px;font-weight:bold;font-size:20px;">
-        ${initials}
-      </div>
+      ${classicAvatar}
     </td>
     <td style="padding-left:16px;vertical-align:top;">
       <div style="font-size:16px;font-weight:bold;color:#0f172a;">${profile.fullName}</div>
@@ -193,8 +202,19 @@ export default function EmailSignaturePage() {
       <div>
         <h1 className="font-display text-2xl font-bold">Email Signature</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Generate a professional signature that links to your digital profile
+          Generate a professional signature that links to your digital profile.
+          Your uploaded profile photo is added automatically (Classic &amp; Modern).
         </p>
+        {profile.profilePhoto ? (
+          <p className="mt-1 text-xs text-emerald-600">
+            ✓ Profile photo attached automatically. Hosted image URLs (Cloudinary/S3)
+            display best in Gmail &amp; Outlook.
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-slate-400">
+            Tip: upload a profile photo in My Profile → Photos and it will appear here automatically.
+          </p>
+        )}
       </div>
 
       {/* Template selector */}

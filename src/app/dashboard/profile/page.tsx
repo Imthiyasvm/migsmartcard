@@ -15,6 +15,10 @@ import {
   Crown,
   Copy,
   Check,
+  QrCode,
+  Lock,
+  Download,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +58,12 @@ export default function ProfileEditorPage() {
   const [origin, setOrigin] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Share & QR tab state
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [qrCustomUrl, setQrCustomUrl] = useState("");
+  const [qrCustomDataUrl, setQrCustomDataUrl] = useState("");
+  const [qrGenerating, setQrGenerating] = useState(false);
 
   const load = useCallback(async (preferId?: string) => {
     const res = await fetch("/api/profile?list=1");
@@ -310,6 +320,31 @@ export default function ProfileEditorPage() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const copyPublicLink = async () => {
+    if (!profile) return;
+    const url = `${origin}/p/${profile.slug}`;
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setMessage("Public profile link copied!");
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const generateCustomQr = async () => {
+    if (!qrCustomUrl.trim()) return;
+    setQrGenerating(true);
+    try {
+      const res = await fetch(
+        `/api/qr?url=${encodeURIComponent(qrCustomUrl)}&format=png&size=512`
+      );
+      if (!res.ok) throw new Error("Failed to generate QR");
+      const blob = await res.blob();
+      setQrCustomDataUrl(URL.createObjectURL(blob));
+    } catch {
+      setMessage("Failed to generate custom QR code");
+    }
+    setQrGenerating(false);
+  };
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center text-slate-400">
@@ -497,6 +532,7 @@ export default function ProfileEditorPage() {
       <Tabs defaultValue="basic">
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
+          <TabsTrigger value="share">Share & QR</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="templates">Profile Template</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
@@ -574,6 +610,175 @@ export default function ProfileEditorPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="share" className="space-y-4">
+          {(() => {
+            const publicHref = `${origin}/p/${profile.slug}`;
+            const qrTarget = `${publicHref}?src=qr`;
+            const qrPng = `/api/qr?url=${encodeURIComponent(qrTarget)}&format=png&size=512`;
+            const qrSvg = `/api/qr?url=${encodeURIComponent(qrTarget)}&format=svg&size=512`;
+            const canCustomQr = canUseFeature(planId, "customTheme");
+            return (
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <QrCode className="h-5 w-5 text-brand-600" /> Dynamic QR Code
+                    </CardTitle>
+                    <CardDescription>
+                      Always opens this profile&apos;s live page — it re-targets
+                      automatically whenever you save changes, no reprint needed.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center space-y-4">
+                    {qrCustomDataUrl ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={qrCustomDataUrl}
+                          alt="Custom QR code"
+                          className="h-56 w-56 rounded-2xl border border-slate-200 bg-white p-3 shadow-soft"
+                        />
+                        <div className="flex w-full gap-2">
+                          <Button variant="outline" size="sm" className="flex-1" asChild>
+                            <a href={qrCustomDataUrl} download={`${profile.slug}-custom-qr.png`}>
+                              <Download className="h-4 w-4" /> PNG
+                            </a>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setQrCustomDataUrl("");
+                              setQrCustomUrl("");
+                            }}
+                          >
+                            <QrCode className="h-4 w-4" /> Back to profile QR
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={qrPng}
+                          alt="Dynamic QR code"
+                          className="h-56 w-56 rounded-2xl border border-slate-200 bg-white p-3 shadow-soft"
+                        />
+                        <div className="flex w-full gap-2">
+                          <Button className="flex-1" asChild>
+                            <a href={qrPng} download={`${profile.slug}-qr.png`}>
+                              <Download className="h-4 w-4" /> PNG
+                            </a>
+                          </Button>
+                          <Button variant="outline" className="flex-1" asChild>
+                            <a href={qrSvg} download={`${profile.slug}-qr.svg`}>
+                              <Download className="h-4 w-4" /> SVG
+                            </a>
+                          </Button>
+                        </div>
+                        <p className="text-center text-[11px] text-slate-400">
+                          Dynamic QR ID:{" "}
+                          <span className="font-mono">{profile.qrCodeId || "auto"}</span>
+                        </p>
+                      </>
+                    )}
+
+                    {canCustomQr ? (
+                      <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                        <p className="text-sm font-medium">Pro+ Custom QR Generator</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Generate a QR for any URL (landing page, calendar, portfolio).
+                        </p>
+                        <div className="mt-3 flex gap-2">
+                          <Input
+                            type="url"
+                            placeholder="https://your-link.com"
+                            value={qrCustomUrl}
+                            onChange={(e) => setQrCustomUrl(e.target.value)}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={generateCustomQr}
+                            loading={qrGenerating}
+                            disabled={!qrCustomUrl.trim()}
+                          >
+                            <QrCode className="h-4 w-4" /> Generate
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full rounded-xl border border-dashed border-slate-300 p-3 text-center dark:border-slate-700">
+                        <Lock className="mx-auto mb-1 h-4 w-4 text-slate-400" />
+                        <p className="text-xs text-slate-500">
+                          Upgrade to Pro+ for custom QR codes
+                        </p>
+                        <Button variant="link" size="sm" asChild>
+                          <Link href="/dashboard/billing">
+                            <Crown className="h-3 w-3" /> View Plans
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Link2 className="h-5 w-5 text-brand-600" /> Shareable Link
+                    </CardTitle>
+                    <CardDescription>
+                      Your public profile URL — share anywhere, no login required to view.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        value={publicHref}
+                        readOnly
+                        className="font-mono text-xs"
+                      />
+                      <Button variant="outline" onClick={copyPublicLink}>
+                        {linkCopied ? (
+                          <Check className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Short link <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">/p/{profile.slug}</code>{" "}
+                      always shows the latest saved profile.
+                    </p>
+                    <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                      <p className="text-xs font-medium">Portable link (works everywhere)</p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Embeds a snapshot of your card — reliable even without Redis.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={copyShareLink}
+                        loading={saving}
+                      >
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied ? "Copied!" : "Copy portable link (/c/…)"}
+                      </Button>
+                    </div>
+                    <Button variant="outline" size="sm" asChild className="w-full">
+                      <Link href="/dashboard/qr">
+                        <QrCode className="h-4 w-4" /> Open full QR &amp; NFC page
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="photos" className="space-y-4">
@@ -734,9 +939,10 @@ export default function ProfileEditorPage() {
                       const next = {
                         ...profile,
                         theme: nextTheme,
-                        // Apply polished template mockup assets (user can re-upload after)
-                        profilePhoto: tpl.avatar,
-                        coverImage: tpl.cover,
+                        // Keep the user's own uploaded photos — only fall back to
+                        // the template's demo avatar/cover when nothing is uploaded.
+                        profilePhoto: profile.profilePhoto || tpl.avatar,
+                        coverImage: profile.coverImage || tpl.cover,
                       };
                       setProfile(next);
                       setSaving(true);

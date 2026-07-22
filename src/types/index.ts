@@ -63,6 +63,8 @@ export interface DigitalProfile {
   customLinks: CustomLink[];
   theme: ProfileTheme;
   nfcId?: string;
+  /** Unique dynamic QR identity — a fresh one is minted for every new profile */
+  qrCodeId?: string;
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
@@ -109,6 +111,11 @@ export interface Lead {
   source: "form" | "nfc" | "qr" | "link";
   createdAt: string;
   viewed: boolean;
+  /** Populated for platform admins viewing all leads */
+  profileName?: string;
+  profileSlug?: string;
+  ownerName?: string;
+  ownerEmail?: string;
 }
 
 export interface AnalyticsEvent {
